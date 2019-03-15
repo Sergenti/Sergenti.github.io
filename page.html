@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="stylesheet" href="style.css">
+	<title>Jeu</title>
+</head>
+
+<body>
+	<div id='loadScr'>Loading...</div>
+	<div id='game' class='hidden'>
+		<div id='debug'>
+			<div id='debugData'></div>
+		</div>
+
+		<div id='game-view-container'>
+			<!-- left part of the screen -->
+			<img id='soundToggler' src="img/gui/sound.png" alt="On" title='Sound On'>
+			<div id='leftpanel'>
+				<div id='leftpanel-title' class='title'><span id='panelTitle'>SETTLEMENT</span></div>
+				<div id='leftpanel-maincontainer'>
+					<!-- default: settlement -->
+					<div id='defaultPanel'>
+						<div id='defaultPanelTitle'>
+							Day Z+<span id='dDayCounter'></span>
+						</div>
+						<div id='campResources'>
+							<div><img src="img/gui/pop.png" alt="Population: " title='Population'> <span id='dPop'></span>
+								/ <span id=dMaxPop></span> <span id='dSick'></span></div>
+							<div><img src="img/gui/resources/food.png" alt="Food:" title='Food'> <span id='dFood'></span></div>
+							<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <span id='dAmmo'></span></div>
+							<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <span id='dDrugs'></span></div>
+							<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <span id='dFuel'></span></div>
+							<br>
+							<div><img src="img/gui/resources/wood.png" alt="Wood:" title='Wood'> <span id='dWood'></span></div>
+							<div><img src="img/gui/resources/metal.png" alt="Metal:" title='Metal'> <span id='dMetal'></span></div>
+							<div><img src="img/gui/resources/concrete.png" alt="Concrete:" title='Concrete'> <span id='dConcrete'></span></div>
+							<div><img src="img/gui/resources/cloth.png" alt="Cloth:" title='Cloth'> <span id='dCloth'></span></div>
+							<div><img src="img/gui/resources/electronics.png" alt="Electronics:" title='Electronics'> <span id='dElectronics'></span></div>
+						</div>
+						<div style='margin-top: 15px;'>
+							<input id='bSave' type="button" value='Save'>
+							<input id='bDeleteSave' type="button" value='Delete save' class='hidden'>
+							<br>
+							<input id='bMusic' type="button" value='Play music !'>
+						</div>
+					</div>
+					<!-- send people -->
+					<div id='groupsPanel' class='hidden' style='height: 100%;'>
+						<div id='groupsContainer' style='height: 100%;'>
+							<div style='margin-bottom: 15px;'>Available people: <span id='dAvPeople'>0</span></div>
+							<div>
+								<div id='group0' class='group'>
+									<div class='groupMembers'>
+										<div style='display: inline-block; font-size: 20px; vertical-align: middle;'>
+											<span id='dPartyMembers0'>0</span>/<span id='dPartyMaxMembers0'>0</span>
+										</div>
+										<input id='bPartyMinus0' type="button" value='-'>
+										<input id='bPartyPlus0' type="button" value='+'>
+										<input id='bSendParty0' type="button" value='Start mission'>
+									</div>
+									<!-- inventory -->
+									<div class='groupInv innerShadow'>
+										<div class='groupInventoryHeader'>
+											<div style='position: absolute; right: 10px'><span id='groupTotalItems0'></span>
+												/ <span id='groupMaxItems0'></span></div>
+											<div style='margin-bottom: 5px;'>Inventory:</div>
+										</div>
+										<div id='resourceInputs0'>
+											<div><img src="img/gui/resources/food.png" alt="Food:" title='Food'> <input id='nFood0' type="number" value='0'
+												 min='0' class='inventoryNum'></div>
+											<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <input id='nAmmo0' type="number" value='0'
+												 min='0' class='inventoryNum'></div>
+											<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <input id='nDrugs0' type="number"
+												 value='0' min='0' class='inventoryNum'></div>
+											<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <input id='nFuel0' type="number" value='0'
+												 min='0' class='inventoryNum'></div>
+										</div>
+										<div id='inventory0' style='width: 100%;'>
+											<div><img src="img/gui/resources/food.png" alt="Food:" title='Food'> <span id='dGroupFood0'></span></div>
+											<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <span id='dGroupAmmo0'></span></div>
+											<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <span id='dGroupDrugs0'></span></div>
+											<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <span id='dGroupFuel0'></span></div>
+											<br>
+											<div><img src="img/gui/resources/wood.png" alt="Wood:" title='Wood'> <span id='dGroupWood0'></span></div>
+											<div><img src="img/gui/resources/metal.png" alt="Metal:" title='Metal'> <span id='dGroupMetal0'></span></div>
+											<div><img src="img/gui/resources/concrete.png" alt="Concrete:" title='Concrete'> <span id='dGroupConcrete0'></span></div>
+											<div><img src="img/gui/resources/cloth.png" alt="Cloth:" title='Cloth'> <span id='dGroupCloth0'></span></div>
+											<div><img src="img/gui/resources/electronics.png" alt="Electronics:" title='Electronics'> <span id='dGroupElectronics0'></span></div>
+										</div>
+
+									</div><!-- end inventory -->
+									<div id='partyTimeContainer0'>Available time: <span id='dPartyTime0' style='font-size: 20; color: rgb(138, 241, 42)'></span>
+										hours</div>
+									<div id='partyCommands0' class='partyCommands'></div>
+									<div id='dPartyNotif0' class='partyNotif'></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- NPC inspector -->
+					<div id='NPCPanel' class='hidden'>
+						<div style='text-align: center; font-weight: bold; color: red; font-size: 30px; padding: 15px;'>DEBUG
+							PANEL</div>
+						<div>
+							<div id='NPCDebugMessage'></div>
+							<div id='NPCHorde' class='hidden'>
+								<div>Index: <span id='NPCHordeIndex'></span></div>
+								<div>ID: <span id='NPCHordeId'></span></div>
+								<div>Members: <span id='NPCHordeMembers'></span></div>
+							</div>
+							<div id='NPCSurvivor' class='hidden'>
+								<div>Index: <span id='NPCSurvivorIndex'></span></div>
+								<div>ID: <span id='NPCSurvivorId'></span></div>
+								<div>Members: <span id='NPCSurvivorMembers'></span></div>
+								<div>Equipment: <span id='NPCEquipment'></span></div>
+								<div>Aggressivity: <span id='NPCAggro'></span></div>
+								<div>Trust: <span id='NPCTrust'></span></div>
+								<div>Trades done: <span id='NPCTrades'></span></div>
+								<div>Fights involved in: <span id='NPCFights'></span></div>
+								<div>Groups assimilated: <span id='NPCAssembles'></span></div>
+							</div>
+						</div>
+					</div>
+					<!-- NPC interaction -->
+					<div id='NPCInteractionPanel' class='hidden'>
+						<div style='margin-bottom: 15px;'>Available time: <span id='NPCInteractionPartyTime' style='font-size: 20; color: rgb(138, 241, 42)'></span>
+							hours</div>
+						<div style='margin-bottom: 15px;'>
+							<div id='hordeInteractionMessage' class='hidden'>
+								<div>Size: <span id='hordeSize'>?</span></div>
+							</div>
+							<div id='survivorInteractionMessage' class='hidden'>
+								<div>Size: <span id='survivorSize'>?</span></div>
+								<div>Equipment: <span id=survivorEquipment>?</span></div>
+								<div>Type: <span id='survivorType'>?</span></div>
+							</div>
+						</div>
+						<div id='NPCInteractionOptions'></div>
+						<div id='NPCInteractionMessage'></div>
+					</div>
+				</div>
+				<div id='leftpanel-commandscontainer'>
+					<input id='bGroups' type='button' value='Groups'>
+					<input id='bNextDay' type="button" value='End day'>
+				</div>
+
+			</div>
+			<!-- playarea: right part of the screen -->
+			<div id='playarea'>
+				<div id='eventTotalContainer' class='hidden'>
+					<div id='eventBackground'></div>
+					<div id='eventContainer'>
+						<div id='event'>
+							<div id='eventTitle' class='title'>EVENT</div>
+							<div id='eventMessages'></div>
+							<div id='eventOptions'></div>
+
+							<input id='bEventContinue' type="button" value='Continue' class='hidden'>
+							<input type="button" value='force exit (dev)' style='position: fixed; bottom: 35px; right: 35px;' onclick="evtDet.hide()">
+						</div>
+					</div>
+				</div>
+				<div id='siteDetContainer' class='hidden'>
+
+					<div id='siteDet'>
+
+						<img src="img/gui/button_exit.png" alt="exit" class='buttonExit' id='siteExitButton'>
+						<div id='siteHeader'>
+							<div id='siteTitle' class='title'>CAMP</div>
+						</div>
+
+						<div id='sitePanelsBar'>
+							<div id='buildTab' class='sitePanelBarTab sitePanelBarTab_clicked'>Build</div>
+							<div id='overviewTab' class='sitePanelBarTab'>Overview</div>
+							<div id='scavengingTab' class='sitePanelBarTab'>Scavenging</div>
+							<div id='researchTab' class='sitePanelBarTab'>Research</div>
+							<div id='garageTab' class='sitePanelBarTab hidden'>Garage</div>
+						</div>
+						<div id='siteContent'>
+							<div id='buildPanel' class='sitePanel'>
+								<div id='buildPanelLeft'>
+									<div class='buildPanelTitle'>Construction</div>
+									<div id='constructionContainer'>
+										<!-- buttons generated with Building.createBuyButton() or BuildingController.fillBuy() -->
+									</div>
+								</div>
+								<div id='buildPanelRight'>
+									<div class='buildPanelTitle'>Workers (<span id='buildPanelAvWorkers'>0</span>)</div>
+									<div id='buildingsContainer'>
+										<!-- buttons generated with Building.createDisplayer() or BuildingController.fillDisplayers() -->
+									</div>
+								</div>
+							</div>
+							<div id='overviewPanel' class='sitePanel hidden'>
+								overview
+							</div>
+							<div id='garagePanel' class='sitePanel hidden'>
+								garage
+							</div>
+							<div id='scavengingPanel' class='sitePanel hidden'>
+								scavenging
+							</div>
+							<div id='researchPanel' class='sitePanel hidden'>
+								research
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id='map'></div>
+			</div>
+			<!-- temp: other stuff -->
+			<div id='gameOptions' class='mainMenuBox hidden'>
+				<input id='volumeOption' type="range" min='0' max='1' step='0.05' value='1' name='volume'>
+				<label for="volume">SFX Volume</label>
+			</div>
+
+
+			<div id='menuRecap' class='hidden'>
+				<div class='mainMenuBox'>
+					<div id='dRecapMessages'></div>
+					<div id='dRecapResourceChange'></div>
+					<input id='bRecapContinue' type="button" value='Continue'>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- dev editing tool -->
+		<div id=toolbox class='box hidden'>
+			<div>TILES:</div>
+			<div id='toolboxMap'>
+				<div id='toolbox_tileContainer'></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- howler.js -->
+	<script type='text/javascript' src='sourcecode/howler.js'></script>
+	<!-- custom code -->
+	<script type='text/javascript' src='sourcecode/audio.js'></script>
+	<script type='text/javascript' src='sourcecode/classes.js'></script>
+	<script type='text/javascript' src='sourcecode/utilities.js'></script>
+	<script type='text/javascript' src='sourcecode/groups.js'></script>
+	<script type='text/javascript' src='sourcecode/building.js'></script>
+	<script type='text/javascript' src='sourcecode/npc.js'></script>
+	<script type='text/javascript' src='sourcecode/events.js'></script>
+	<script type='text/javascript' src='sourcecode/mapData.js'></script>
+	<script type='text/javascript' src='sourcecode/tiles.js'></script>
+	<script type='text/javascript' src='sourcecode/main.js'></script>
+</body>
+
+</html>
