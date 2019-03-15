@@ -1,2 +1,2 @@
 # zombiegame
-A tiny HTML DOM game I code on the weekends
+An overly ambitious HTML DOM game I code on the weekends
