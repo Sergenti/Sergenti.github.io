@@ -1,6 +1,4 @@
-![alt text][logo]
-
-[logo]: https://github.com/Sergenti/zombiegame/img/devroadster.gif "tank"
+![tank](https://github.com/Sergenti/zombiegame/img/devroadster.gif)
 
 # zombiegame
 An overly ambitious HTML DOM game I code on the weekends
