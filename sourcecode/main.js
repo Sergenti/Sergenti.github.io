@@ -629,7 +629,7 @@ function openMap(data, origin) {
 		line.forEach((storedTileData, x) => {
 			let tileData;
 			if (origin == 'save') {
-				tileData = new TileData(storedTileData.t, `map${x}_${y}`, storedTileData.d, storedTileData.r);
+				tileData = new TileData(storedTileData.t, `map${x}_${y}`, storedTileData.d, storedTileData.r, storedTileData.vm);
 			} else {
 				tileData = new TileData(storedTileData, `map${x}_${y}`, false, 1000);
 			}
@@ -683,6 +683,12 @@ function openSavedGame() {
 
 	/* PLAYER */
 	Object.setPrototypeOf(player, Player.prototype);
+	if(player.researchUnlocked){
+		document.getElementById('researchTab').classList.remove('hidden');
+	}
+	if(player.garageUnlocked){
+		document.getElementById('garageTab').classList.remove('hidden');
+	}
 
 	/* CAMP */
 	Object.setPrototypeOf(camp, Site.prototype);

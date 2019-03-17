@@ -487,6 +487,7 @@ class Party {
 				createGroupOption(gn, 'yes', function () {
 					party.vehicle = vehicles.foot;
 					party.updateVignette();
+					currTile.vehicleMemory.push(new TileVehicleMemory(party.vehicle, 100));
 					party.setNotif('We got rid of the car.');
 					party.updateInfo();
 				});

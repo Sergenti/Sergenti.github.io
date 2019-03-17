@@ -79,8 +79,10 @@ class BuildController {
 				text: 'Allows you to send more groups to scavenge.',
 				limit: 5,
 				onBuild: function (garageQty) {
-					if (garageQty == 0) document.getElementById('garageTab').classList.remove('hidden');
-
+					if (garageQty == 1) {
+						document.getElementById('garageTab').classList.remove('hidden');
+						player.garageUnlocked = true;
+					}
 					for(let gn = 0; gn < scavenging.getMaxParties(); gn++){
 						let party = scavenging.parties[gn];
 						if(party.unlocked == false){
@@ -89,6 +91,24 @@ class BuildController {
 							break;
 						}
 					}
+				},
+			}),
+			/* Workshop (enables research) */
+			new Building({
+				idName: 'workshop',
+				name: 'Workshop',
+				resources: {
+					wood: 1000,
+					metal: 450,
+					concrete: 500,
+					cloth: 50,
+					electronics: 200,
+				},
+				text: `It's expensive, and it allows you to spend more resources on research.`,
+				limit: 1,
+				onBuild: function () {
+					document.getElementById('researchTab').classList.remove('hidden');
+					player.researchUnlocked = true;
 				},
 			}),
 			/* Windmill */

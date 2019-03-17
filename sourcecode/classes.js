@@ -14,6 +14,9 @@ class Player {
 
 		this.farmProductionMultiplier = 1;
 
+		this.researchUnlocked = false;
+		this.garageUnlocked = false;
+
 		/* this.unlockedBuildings = [
 				'house', 
 		]; */
@@ -42,13 +45,13 @@ class StoredTileData {
 }
 /* actual tile data that goes in map.layout */
 class TileData {
-	constructor(typeIndex, id, discovered, resourceLevel) {
+	constructor(typeIndex, id, discovered, resourceLevel, vehicleMemory = []) {
 		this.typeIndex = typeIndex;
 		this.id = id;
 		this.discovered = discovered;
 		this.type = map.layoutTiles[typeIndex].type;
 		this.resourceLevel = resourceLevel;
-		this.vehicleMemory = [];
+		this.vehicleMemory = vehicleMemory;
 
 		/* DEFINE TYPE DEPENDENT VARIABLES */
 		this.setTypeDependentVariables();
@@ -192,6 +195,13 @@ class TileData {
 	ct() { changeTile(this.id, editor.currentElemMap) }
 
 
+}
+
+class TileVehicleMemory {
+	constructor(vehicle, state){
+		this.state = state;
+		this.vehicle = vehicle.type;
+	}
 }
 
 class Vehicle {
@@ -343,14 +353,12 @@ class SiteDisplayController {
 			build: document.getElementById('buildTab'),
 			overview: document.getElementById('overviewTab'),
 			garage: document.getElementById('garageTab'),
-			scavenging: document.getElementById('scavengingTab'),
 			research: document.getElementById('researchTab'),
 		}
 		this.panels = {
 			build: document.getElementById('buildPanel'),
 			overview: document.getElementById('overviewPanel'),
 			garage: document.getElementById('garagePanel'),
-			scavenging: document.getElementById('scavengingPanel'),
 			research: document.getElementById('researchPanel'),
 		}
 
