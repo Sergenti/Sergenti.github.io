@@ -476,7 +476,7 @@ input[id=bNextDay]:hover{
     margin: 2px;
 }
 
-#siteDetContainer{
+#IGWindowContainer{
     position: fixed;
     top: 0px;
     left: 353px;
@@ -485,10 +485,11 @@ input[id=bNextDay]:hover{
     z-index: 4;
 }
 
-#siteDet{
+#IGWindow{
     margin: 20px;
     border: 1px solid black;
-    background-color: rgba(153, 153, 153, 0.685);
+		background-color: rgba(153, 153, 153, 0.685);
+		overflow: hidden;
     /* background-color: white;
     opacity: 0.60; */
 }
@@ -554,11 +555,11 @@ input[id=bNextDay]:hover{
 }
 
 #constructionContainer{ 
-    overflow-y: scroll; 
+    overflow-y: auto; 
 }
 
 #buildingsContainer{ 
-    overflow-y: scroll; 
+    overflow-y: auto; 
 }
 #buildPanelLeft{
 	width: 47%;
@@ -662,4 +663,38 @@ input[id=bNextDay]:hover{
 
 .buildDisplayerButtonsContainer{
 	display: inline-block;
+}
+
+/* Group vignettes (buttons in group panel) */
+
+#groupVignetteContainer{
+	width: 100%;
+	height: 90%;
+	overflow-y: auto;
+}
+
+.groupVignette{
+	width: 95%;
+	text-align: left; /* makes icon stay on the left */
+	font-family: inherit;
+	margin-bottom: 5px;
+}
+
+.groupVignetteTitle{
+	position: absolute;
+	left: 69px;
+	font-weight: bold;
+	font-size: 18px;
+}
+
+.groupVignettePopContainer{
+	float: right;
+	position: relative;
+	bottom: 10px;
+	right: 5px;
+}
+
+#siteDet{
+	height: 100%;
+	width: 100%;
 }

@@ -48,57 +48,11 @@
 							<input id='bMusic' type="button" value='Play music !'>
 						</div>
 					</div>
-					<!-- send people -->
+					<!-- groups overview -->
 					<div id='groupsPanel' class='hidden' style='height: 100%;'>
 						<div id='groupsContainer' style='height: 100%;'>
 							<div style='margin-bottom: 15px;'>Available people: <span id='dAvPeople'>0</span></div>
-							<div>
-								<div id='group0' class='group'>
-									<div class='groupMembers'>
-										<div style='display: inline-block; font-size: 20px; vertical-align: middle;'>
-											<span id='dPartyMembers0'>0</span>/<span id='dPartyMaxMembers0'>0</span>
-										</div>
-										<input id='bPartyMinus0' type="button" value='-'>
-										<input id='bPartyPlus0' type="button" value='+'>
-										<input id='bSendParty0' type="button" value='Start mission'>
-									</div>
-									<!-- inventory -->
-									<div class='groupInv innerShadow'>
-										<div class='groupInventoryHeader'>
-											<div style='position: absolute; right: 10px'><span id='groupTotalItems0'></span>
-												/ <span id='groupMaxItems0'></span></div>
-											<div style='margin-bottom: 5px;'>Inventory:</div>
-										</div>
-										<div id='resourceInputs0'>
-											<div><img src="img/gui/resources/food.png" alt="Food:" title='Food'> <input id='nFood0' type="number" value='0'
-												 min='0' class='inventoryNum'></div>
-											<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <input id='nAmmo0' type="number" value='0'
-												 min='0' class='inventoryNum'></div>
-											<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <input id='nDrugs0' type="number"
-												 value='0' min='0' class='inventoryNum'></div>
-											<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <input id='nFuel0' type="number" value='0'
-												 min='0' class='inventoryNum'></div>
-										</div>
-										<div id='inventory0' style='width: 100%;'>
-											<div><img src="img/gui/resources/food.png" alt="Food:" title='Food'> <span id='dGroupFood0'></span></div>
-											<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <span id='dGroupAmmo0'></span></div>
-											<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <span id='dGroupDrugs0'></span></div>
-											<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <span id='dGroupFuel0'></span></div>
-											<br>
-											<div><img src="img/gui/resources/wood.png" alt="Wood:" title='Wood'> <span id='dGroupWood0'></span></div>
-											<div><img src="img/gui/resources/metal.png" alt="Metal:" title='Metal'> <span id='dGroupMetal0'></span></div>
-											<div><img src="img/gui/resources/concrete.png" alt="Concrete:" title='Concrete'> <span id='dGroupConcrete0'></span></div>
-											<div><img src="img/gui/resources/cloth.png" alt="Cloth:" title='Cloth'> <span id='dGroupCloth0'></span></div>
-											<div><img src="img/gui/resources/electronics.png" alt="Electronics:" title='Electronics'> <span id='dGroupElectronics0'></span></div>
-										</div>
-
-									</div><!-- end inventory -->
-									<div id='partyTimeContainer0'>Available time: <span id='dPartyTime0' style='font-size: 20; color: rgb(138, 241, 42)'></span>
-										hours</div>
-									<div id='partyCommands0' class='partyCommands'></div>
-									<div id='dPartyNotif0' class='partyNotif'></div>
-								</div>
-							</div>
+							<div id='groupsVignetteContainer'></div>
 						</div>
 					</div>
 					<!-- NPC inspector -->
@@ -144,6 +98,7 @@
 					</div>
 				</div>
 				<div id='leftpanel-commandscontainer'>
+					<input id='bCamp' type='button' value='Overview'>
 					<input id='bGroups' type='button' value='Groups'>
 					<input id='bNextDay' type="button" value='End day'>
 				</div>
@@ -164,49 +119,98 @@
 						</div>
 					</div>
 				</div>
-				<div id='siteDetContainer' class='hidden'>
 
-					<div id='siteDet'>
+				<div id='IGWindowContainer' class='hidden'>
+					<div id='IGWindow'>
+						<img src="img/gui/button_exit.png" alt="exit" class='buttonExit' id='IGWindowExitButton'>
+						<!-- site window -->
+						<div id='siteDet'>
+							<div id='siteHeader'>
+								<div id='siteTitle' class='title'>CAMP</div>
+							</div>
 
-						<img src="img/gui/button_exit.png" alt="exit" class='buttonExit' id='siteExitButton'>
-						<div id='siteHeader'>
-							<div id='siteTitle' class='title'>CAMP</div>
-						</div>
-
-						<div id='sitePanelsBar'>
-							<div id='buildTab' class='sitePanelBarTab sitePanelBarTab_clicked'>Build</div>
-							<div id='overviewTab' class='sitePanelBarTab'>Overview</div>
-							<div id='scavengingTab' class='sitePanelBarTab'>Scavenging</div>
-							<div id='researchTab' class='sitePanelBarTab'>Research</div>
-							<div id='garageTab' class='sitePanelBarTab hidden'>Garage</div>
-						</div>
-						<div id='siteContent'>
-							<div id='buildPanel' class='sitePanel'>
-								<div id='buildPanelLeft'>
-									<div class='buildPanelTitle'>Construction</div>
-									<div id='constructionContainer'>
-										<!-- buttons generated with Building.createBuyButton() or BuildingController.fillBuy() -->
+							<div id='sitePanelsBar'>
+								<div id='buildTab' class='sitePanelBarTab sitePanelBarTab_clicked'>Build</div>
+								<div id='overviewTab' class='sitePanelBarTab'>Overview</div>
+								<div id='scavengingTab' class='sitePanelBarTab'>Scavenging</div>
+								<div id='researchTab' class='sitePanelBarTab'>Research</div>
+								<div id='garageTab' class='sitePanelBarTab hidden'>Garage</div>
+							</div>
+							<div id='siteContent'>
+								<div id='buildPanel' class='sitePanel'>
+									<div id='buildPanelLeft'>
+										<div class='buildPanelTitle'>Construction</div>
+										<div id='constructionContainer'>
+											<!-- buttons generated with Building.createBuyButton() or BuildingController.fillBuy() -->
+										</div>
+									</div>
+									<div id='buildPanelRight'>
+										<div class='buildPanelTitle'>Workers (<span id='buildPanelAvWorkers'>0</span>)</div>
+										<div id='buildingsContainer'>
+											<!-- buttons generated with Building.createDisplayer() or BuildingController.fillDisplayers() -->
+										</div>
 									</div>
 								</div>
-								<div id='buildPanelRight'>
-									<div class='buildPanelTitle'>Workers (<span id='buildPanelAvWorkers'>0</span>)</div>
-									<div id='buildingsContainer'>
-										<!-- buttons generated with Building.createDisplayer() or BuildingController.fillDisplayers() -->
-									</div>
+								<div id='overviewPanel' class='sitePanel hidden'>
+									overview
+								</div>
+								<div id='garagePanel' class='sitePanel hidden'>
+									garage
+								</div>
+								<div id='scavengingPanel' class='sitePanel hidden'>
+									scavenging
+								</div>
+								<div id='researchPanel' class='sitePanel hidden'>
+									research
 								</div>
 							</div>
-							<div id='overviewPanel' class='sitePanel hidden'>
-								overview
+						</div>
+						<!-- group window -->
+						<div id='groups' class='group hidden'>
+							<div class='title' id='groupWindowTitle'></div>
+							<div class='groupMembers'>
+								<div style='display: inline-block; font-size: 20px; vertical-align: middle;'>
+									<span id='dPartyMembers'>0</span>/<span id='dPartyMaxMembers'>0</span>
+								</div>
+								<input id='bPartyMinus' type="button" value='-'>
+								<input id='bPartyPlus' type="button" value='+'>
+								<input id='bSendParty' type="button" value='Start mission'>
 							</div>
-							<div id='garagePanel' class='sitePanel hidden'>
-								garage
-							</div>
-							<div id='scavengingPanel' class='sitePanel hidden'>
-								scavenging
-							</div>
-							<div id='researchPanel' class='sitePanel hidden'>
-								research
-							</div>
+							<!-- inventory -->
+							<div class='groupInv innerShadow'>
+								<div class='groupInventoryHeader'>
+									<div style='position: absolute; right: 10px'><span id='groupTotalItems'></span>
+										/ <span id='groupMaxItems'></span></div>
+									<div style='margin-bottom: 5px;'>Inventory:</div>
+								</div>
+								<div id='resourceInputs'>
+									<div><img src="img/gui/resources/food.png" alt="Food:" title='Food'> <input id='nFood' type="number" value='0'
+										 min='0' class='inventoryNum'></div>
+									<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <input id='nAmmo' type="number" value='0'
+										 min='0' class='inventoryNum'></div>
+									<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <input id='nDrugs' type="number"
+										 value='0' min='0' class='inventoryNum'></div>
+									<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <input id='nFuel' type="number" value='0'
+										 min='0' class='inventoryNum'></div>
+								</div>
+								<div id='groupInventory' style='width: 100%;'>
+									<div><img src="img/gui/resources/food.png" alt="Food:" title='Food'> <span id='dGroupFood'></span></div>
+									<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <span id='dGroupAmmo'></span></div>
+									<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <span id='dGroupDrugs'></span></div>
+									<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <span id='dGroupFuel'></span></div>
+									<br>
+									<div><img src="img/gui/resources/wood.png" alt="Wood:" title='Wood'> <span id='dGroupWood'></span></div>
+									<div><img src="img/gui/resources/metal.png" alt="Metal:" title='Metal'> <span id='dGroupMetal'></span></div>
+									<div><img src="img/gui/resources/concrete.png" alt="Concrete:" title='Concrete'> <span id='dGroupConcrete'></span></div>
+									<div><img src="img/gui/resources/cloth.png" alt="Cloth:" title='Cloth'> <span id='dGroupCloth'></span></div>
+									<div><img src="img/gui/resources/electronics.png" alt="Electronics:" title='Electronics'> <span id='dGroupElectronics'></span></div>
+								</div>
+
+							</div><!-- end inventory -->
+							<div id='partyTimeContainer'>Available time: <span id='dPartyTime' style='font-size: 20; color: rgb(138, 241, 42)'></span>
+								hours</div>
+							<div id='partyCommands' class='partyCommands'></div>
+							<div id='dPartyNotif' class='partyNotif'></div>
 						</div>
 					</div>
 				</div>

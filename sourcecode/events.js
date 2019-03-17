@@ -2,12 +2,11 @@ function nextDay() {
 	let resChange = document.getElementById('dRecapResourceChange');
 	let messages = document.getElementById('dRecapMessages');
 	/* close site details if opened */
-	if (!siteDet.isHidden()) { siteDet.hide(); }
+	if (!IGWindow.isHidden()) { IGWindow.hide(); }
 
 	NPCs.progress();
 	scavengingProgress();
 	buildProgress();
-	updateGroupInfo();
 
 	//End of day resource changes
 	/* FOOD */
@@ -92,10 +91,10 @@ function nextDay() {
 					per.eat(player.foodRation, party.inventory);//removes food in inventory and adds hunger to the person
 					per.getSickMaybe();//opportunity to get sick
 				});
-				updateGroupOptions(gn);
+				party.updateVignette();
 				//party.checkNPCCollision();
 			}
-			document.getElementById('dPartyNotif' + gn).innerHTML = '';
+			document.getElementById('dPartyNotif').innerHTML = '';
 		});
 	}
 

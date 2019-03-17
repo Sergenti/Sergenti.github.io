@@ -81,7 +81,13 @@ let editor = {
 		map.layout.forEach((lineData, y) => {
 			arr.push([]);
 			lineData.forEach((tileData) => {
-				arr[y].push(new StoredTileData(tileData.typeIndex, tileData.discovered, tileData.resourceLevel));
+				arr[y].push(
+					new StoredTileData(
+						tileData.typeIndex,
+						tileData.discovered,
+						tileData.resourceLevel,
+						tileData.vehicleMemory
+					));
 			});
 		});
 		return JSON.stringify(arr);
@@ -154,9 +160,8 @@ const vehicles = {
 }
 
 let scavenging = {
-	parties: [
-		new Party(0, camp),
-	],
+	parties: [],
+	selectedParty: undefined,
 	movingParty: undefined,
 	getTotalScavengers: function () {
 		return this.parties.reduce((total, party) => total += party.people.getTotalMembers(), 0);
@@ -170,6 +175,9 @@ let scavenging = {
 		});
 		return max;
 	},
+	getMaxParties: function () {
+		return build.buildings[build.indexTable.garage].limit;
+	}
 };
 
 let sounds = {
@@ -188,11 +196,37 @@ let musics = new musicsController();
 let NPCs = new NPCController();
 let siteDet = new SiteDisplayController();
 let evtDet = new EventDisplayController();
+let IGWindow = new IGWindowController();
 
 /////////////////////////////////////SETUP///////////////////////////////////////
-(function () {
+(() => {
+	/* keyboard events */
+	document.onkeydown = function (evt) {
+		evt = evt || window.event;
+		var charCode = evt.keyCode || evt.which;
+		if (charCode == 27) { // ESC
+			evt.preventDefault();
+			onEscapeKeyDown();
+		}
+	};
 	document.getElementById('bNextDay').addEventListener('click', nextDay);
 	document.getElementById('bGroups').addEventListener('click', toggleGroupsPanel);
+	document.getElementById('bCamp').addEventListener('click', () => {
+		if (IGWindow.isHidden()) {
+			siteDet.setTitle('CAMP');
+			build.updateButtons();
+			IGWindow.changeWindow('site');
+			IGWindow.show();
+		} else {
+			if (IGWindow.currentWindow != 'site') {
+				siteDet.setTitle('CAMP');
+				build.updateButtons();
+				IGWindow.changeWindow('site');
+			} else {
+				IGWindow.hide();
+			}
+		}
+	});
 	document.getElementById('bRecapContinue').addEventListener('click', closeRecapMenu);
 	document.getElementById('bSave').addEventListener('click', saveGame);
 	document.getElementById('bDeleteSave').addEventListener('click', deleteSaveGame);
@@ -207,7 +241,7 @@ let evtDet = new EventDisplayController();
 	if (sounds.enabled) sT.src = 'img/gui/sound.png';
 	else sT.src = 'img/gui/no_sound.png';
 
-	siteDet.exitButton.addEventListener('click', function () { siteDet.hide() });
+	IGWindow.exit.addEventListener('click', () => { IGWindow.hide() });
 	/* on window resize */
 	window.addEventListener('resize', windowResized);
 
@@ -226,33 +260,11 @@ let evtDet = new EventDisplayController();
 	}
 	/* create new game */
 	else {
-		openMap(mapData);
-		//add NPC units
-		NPCs.addHordes(50);
-		NPCs.addSurvivors(150);
-		console.log({ humans0: NPCs.getTotalSurvivorMembers(), zombies0: NPCs.getTotalHordeMembers() });
-		NPCs.progress(200);
-		NPCs.forAllUnits((unit) => unit.runAwayFromCamp());
-		console.log({ humans150: NPCs.getTotalSurvivorMembers(), zombies150: NPCs.getTotalHordeMembers() });
-
-		//setup inventory
-		camp.resources.food = 300;
-		camp.resources.ammo = 100;
-		camp.resources.fuel = 50;
-		camp.resources.drugs = 25;
-
-		camp.resources.wood = 0;
-		camp.resources.metal = 0;
-		camp.resources.concrete = 0;
-		camp.resources.cloth = 0;
-		camp.resources.electronics = 0;
-		Object.getOwnPropertyNames(camp.resources).forEach((n) => camp.resources[n] = 5000);
-		camp.people.addPeople.apply(camp.people, generatePeople(5));
+		newGame();
 	}
 	/* setup error handlers and  + / - / send button listeners in inputs in group panel */
-	scavenging.parties.forEach(function (party, i) {
-		party.addPanelListeners();
-	});
+	addGroupsWindowListeners();
+
 	/* siteDet setup */
 	build.fillBuy();
 	build.fillDisplayers();
@@ -288,7 +300,41 @@ let evtDet = new EventDisplayController();
 	});
 })();
 ////////////////////////////////////LIBRARY//////////////////////////////////////
+function newGame() {
+	openMap(mapData);
+	//add NPC units
+	NPCs.addHordes(50);
+	NPCs.addSurvivors(150);
+	console.log({ humans0: NPCs.getTotalSurvivorMembers(), zombies0: NPCs.getTotalHordeMembers() });
+	NPCs.progress(200);
+	NPCs.forAllUnits((unit) => unit.runAwayFromCamp());
+	console.log({ humans150: NPCs.getTotalSurvivorMembers(), zombies150: NPCs.getTotalHordeMembers() });
 
+
+	//setup inventory
+	camp.resources.food = 300;
+	camp.resources.ammo = 100;
+	camp.resources.fuel = 50;
+	camp.resources.drugs = 25;
+
+	camp.resources.wood = 0;
+	camp.resources.metal = 0;
+	camp.resources.concrete = 0;
+	camp.resources.cloth = 0;
+	camp.resources.electronics = 0;
+
+	/* set number of people in the camp at start */
+	camp.people.addPeople.apply(camp.people, generatePeople(5));
+	/* generate parties */
+	for (let gn = 0; gn < scavenging.getMaxParties(); gn++) {
+		scavenging.parties.push(new Party(gn));
+	}
+	console.log(scavenging.parties);
+	let firstParty = scavenging.parties[0];
+	firstParty.unlocked = true;
+	firstParty.vehicle = vehicles.small_car;
+	createGroupsVignettes();
+}
 function windowResized() {
 	let playarea = document.getElementById('playarea'),
 		panel = document.getElementById('leftpanel'),
@@ -298,12 +344,16 @@ function windowResized() {
 	let width = window.innerWidth;
 	let height = window.innerHeight;
 	let panelWidth = panel.offsetWidth;
+
 	playarea.style.width = (width - panelWidth) + 'px';
+
 	event.style.width = (width - panelWidth - 40) + 'px';
 	event.style.height = (height - 40) + 'px';
+
 	evTotCont.style.width = width - panelWidth + 'px';
 	evTotCont.style.height = height;
-	siteDet.updateSize();
+
+	IGWindow.updateSize();
 	/* don't display playarea if the screen width is lower than the left panel's width */
 	if (width <= panelWidth && !playarea.classList.contains('hidden')) {
 		playarea.classList.add('hidden');
@@ -315,6 +365,22 @@ function windowResized() {
 	let title = document.getElementById('leftpanel-title');
 	let maincontainer = document.getElementById('leftpanel-maincontainer');
 	commands.style.height = height - (title.offsetHeight + maincontainer.offsetHeight) + 'px';
+}
+function onEscapeKeyDown() {
+	if (IGWindow.isHidden()) {
+		if (scavenging.movingParty != undefined) {
+			let party = scavenging.parties[scavenging.movingParties];
+			removeMovementMap();
+			if (IGWindow.currentWindow != 'groups') {
+				IGWindow.changeWindow('groups');
+				party.updateInfo();
+			}
+			IGWindow.show();
+		}
+	} else {
+		IGWindow.hide();
+	}
+
 }
 function addListenersOptions() {//broken
 	let volume = document.getElementById('volumeOption');
@@ -389,7 +455,8 @@ function clickOnMapTile(tile) {
 		if (tileData.type == 'camp') {
 			siteDet.setTitle('CAMP');
 			build.updateButtons();
-			siteDet.show();
+			IGWindow.changeWindow('site');
+			IGWindow.show();
 		}
 	}
 	/* DEBUG */
@@ -434,13 +501,12 @@ function updateMetrics() {
 
 	let sickppl = player.getTotalSick();
 	document.getElementById('dSick').innerHTML = sickppl > 0 ? `<img src="img/gui/pop_sick.png" alt="Sick:" title='Sick'> <span style='color: orange;'>${sickppl}</span>` : '';
-
 }
 function toggleGroupsPanel() {
 	let scPanel = document.getElementById('groupsPanel');
 	if (scPanel.classList.contains('hidden')) {
-		updateGroupInfo();
-		changePanel('groups')
+		changePanel('groups');
+		updateGroupsVignettes();
 	} else {
 		changePanel();
 	}
@@ -543,6 +609,14 @@ function generatePeople(qty) {
 	let people = [];
 	for (let i = 0; i < qty; i++) { people.push(new Person()); }
 	return people;
+}
+function $$$resources($ = 1000) {
+	Object.getOwnPropertyNames(camp.resources).forEach((n) => camp.resources[n] += $);
+	updateMetrics();
+}
+function $$$people($ = 5) {
+	camp.people.addPeople.apply(camp.people, generatePeople($));
+	updateMetrics();
 }
 
 //////////////////////////////////////DATA/////////////////////////////
@@ -655,10 +729,10 @@ function openSavedGame() {
 		if (party.inMission) {
 			['food', 'ammo', 'fuel'].forEach((name) => {
 				camp.resources[name] -= party.inventory[name];
-				let input = document.getElementById(g('n' + firstLetterToUpperCase(name), gn));
+				let input = document.getElementById('n' + firstLetterToUpperCase(name));
 				input.classList.add('hidden');
 				input.value = 0;
-				let d = document.getElementById(g('dGroup' + firstLetterToUpperCase(name), gn));
+				let d = document.getElementById('dGroup' + firstLetterToUpperCase(name));
 				d.innerHTML = party.inventory[name];
 				d.classList.remove('hidden');
 			});
@@ -666,10 +740,9 @@ function openSavedGame() {
 			party.setNotif('Ready to receive orders.', 'lightgreen');
 			//Display group icon
 			party.createIcon();
-			updateGroupInfo(); //also places the icon on the map
+			createGroupsVignettes();
+			party.updateInfo(); //also places the icon on the map
 			updateMetrics();
-			//display options as to what to do with the group
-			updateGroupOptions(gn);
 		}
 	});
 }

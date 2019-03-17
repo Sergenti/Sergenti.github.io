@@ -33,10 +33,11 @@ class Player {
 }
 /* compressed for storage */
 class StoredTileData {
-	constructor(typeIndex, discovered, resourceLevel) {
+	constructor(typeIndex, discovered, resourceLevel, vehicleMemory) {
 		this.t = typeIndex;
 		this.d = discovered;
 		this.r = resourceLevel;
+		this.vm = vehicleMemory
 	}
 }
 /* actual tile data that goes in map.layout */
@@ -47,6 +48,7 @@ class TileData {
 		this.discovered = discovered;
 		this.type = map.layoutTiles[typeIndex].type;
 		this.resourceLevel = resourceLevel;
+		this.vehicleMemory = [];
 
 		/* DEFINE TYPE DEPENDENT VARIABLES */
 		this.setTypeDependentVariables();
@@ -205,385 +207,6 @@ class Vehicle {
 	}
 }
 
-class Party {
-	constructor(gn, site = camp) {
-		this.inMission = false;
-		this.people = new PeopleGroup();
-		this.status = undefined; //0: going to, 1: at, 2: coming back
-		this.inventory = new Inventory();
-		this.vehicle = vehicles.small_car;
-		this.time = 0; //Action points
-		this.pos = { x: site.pos.x, y: site.pos.y };
-		this.gn = gn;
-		this.icon;
-	}
-	move(x, y) {
-		let distance = manhattanDistance(this.pos.x, this.pos.y, x, y);
-		let timeCost = Math.floor(distance / this.vehicle.speed);
-		this.pos = { x: x, y: y };
-		this.time -= timeCost;
-		this.vehicle.moveCounter += distance;
-		/* update fuel in inventory */
-		if (this.vehicle.moveCounter == this.vehicle.unitsPerFuelLoss) {
-			this.inventory.fuel -= this.vehicle.fuelLoss;
-			this.vehicle.moveCounter = 0;
-			let distanceToCamp = manhattanDistance(this.pos.x, this.pos.y, player.campPos.x, player.campPos.y);
-			let lowFuelMark = this.vehicle.fuelLoss * (distanceToCamp + 10) / this.vehicle.unitsPerFuelLoss;
-			let noReturnMark = this.vehicle.fuelLoss * distanceToCamp / this.vehicle.unitsPerFuelLoss;
-			let fuelDisplay = document.getElementById(g('dGroupFuel', this.gn));
-			if (this.inventory.fuel <= 0) {/* NO MORE FUEL */
-				this.inventory.fuel = 0;
-				this.setNotif(`You have no fuel left.`, 'red');
-				fuelDisplay.style.color = 'red';
-			} else if (this.inventory.fuel < noReturnMark) {/* NOT ENOUGH FUEL TO GO BACK TO CAMP */
-				this.setNotif(`You don't have enough fuel to come back !`, 'orange');
-				fuelDisplay.style.color = 'orange';
-			} else if (this.inventory.fuel <= lowFuelMark) {/* LOW FUEL */
-				this.setNotif(`You barely have enough fuel to come back !`, 'yellow');
-				fuelDisplay.style.color = 'yellow';
-			}
-		}
-		updateGroupMovementMap(this.gn);
-		moveElementOnTileMap(document.getElementById(g('partyIcon', this.gn)), `map${x}_${y}`);
-		updateGroupOptions(this.gn);
-		updateGroupInfo();
-	}
-	createIcon() {
-		let icon = document.createElement('img');
-		let self = this;
-		icon.setAttribute('id', g('partyIcon', self.gn))
-		icon.setAttribute('class', 'map_unit_icon');
-		icon.setAttribute('src', self.vehicle.iconsrc);
-		icon.setAttribute('alt', g('Group ', self.gn));
-		icon.addEventListener('click', function () { changePanel('groups') });
-		document.getElementById('map').appendChild(icon);
-		self.icon = icon;
-	}
-	getMissionStatusStr() {
-		if (this.status != undefined) {
-			const str = ['going to', 'in the', 'coming back from'];
-			let destName = 'destName';
-			return str[this.status] + ' the ' + destName;
-		} else {
-			console.log('status is undefined. (party.getMissionStatus)');
-			return 'lost';
-		}
-	}
-	setNotif(message, color = 'white') {
-		let notif = document.getElementById(g('dPartyNotif', this.gn));
-		notif.innerHTML = message;
-		notif.style.color = color;
-	}
-	reset() {
-		this.inMission = false;
-		this.status = undefined;
-		this.members = 0;
-		this.pos = player.campPos;
-		let self = this;
-		Object.getOwnPropertyNames(this.inventory).forEach(function (property) {
-			self.inventory[property] = 0;
-		});
-		document.getElementById('resourceInputs' + this.gn).classList.remove('hidden');
-		document.getElementById('inventory' + this.gn).classList.add('hidden');
-		['food', 'ammo', 'fuel'].forEach((n) => {
-			let input = document.getElementById('n' + firstLetterToUpperCase(n) + this.gn);
-			input.classList.remove('hidden');
-		});
-		this.icon.parentElement.removeChild(this.icon);
-	}
-	transferInventoryToCamp() {
-		let self = this;
-		Object.getOwnPropertyNames(this.inventory).forEach(function (property) {
-			camp.resources.addResource(property, self.inventory[property]);
-			self.inventory[property] = 0;
-		});
-	}
-	addResource(name, qty) {
-		if (this.inventory.getSum() + qty > this.vehicle.carry) {
-			/* display message to indicate lack of space */
-			console.log('not enough space !');
-		} else if (!isNaN(qty)) {
-			this.inventory[name] += qty;
-		}
-	}
-	checkNPCCollision() {
-		NPCs.forAllUnits((unit) => {
-			if (unit.x == this.pos.x && unit.y == this.pos.y) {
-				console.log({ coll_party: this, coll_unit: unit });
-			}
-		});
-	}
-	createNPCInteractionOptions(NPC) {
-		let options = document.getElementById('NPCInteractionOptions');
-		options.innerHTML = '';
-		let party = this;
-		/* 
-				HORDE
-		*/
-		if (NPC.data instanceof Horde) {
-			/* if (party.time >= 1) {
-				createOption('Attack', () => attack(NPC));
-			} */
-			if (party.time >= 3) {
-				createOption('Gather info (3h)', () => gatherInfo(NPC));
-			}
-			createOption('Lure in another direction', () => { });
-		}
-		/* 
-				SURVIVOR
-		*/
-		else if (NPC.data instanceof Survivor) {
-			if (party.time >= 1) {
-				createOption('Attack', () => attack(NPC));
-			}
-			if (party.time >= 3) {
-				createOption('Gather info (3h)', () => gatherInfo(NPC));
-			}
-		} else {
-			console.error(new Error('invalid data type.'));
-		}
-		changePanel('NPCInteraction');
-		this.updateNPCInteraction(NPC);
-
-		function gatherInfo(NPC) {
-			if (getDistance(party.pos.x, party.pos.y, NPC.x, NPC.y) > 1) {
-				party.setNPCNotif('We are too far.', 'red');
-			} else {
-				party.time -= 3;
-				party.gatherInfo(NPC);
-			}
-		}
-
-		function attack(NPC) {
-
-			if (getDistance(party.pos.x, party.pos.y, NPC.x, NPC.y) > 1) {
-				party.setNPCNotif('We are too far.', 'red');
-			} else {
-				party.time -= 3;
-				party.attack(NPC);
-			}
-		}
-
-		function createOption(value, handler) {
-			createButton(value, options, handler);
-		}
-	}
-	updateNPCInteraction(NPC) {
-		let time = document.getElementById('NPCInteractionPartyTime');
-		time.innerHTML = this.time;
-
-		/* NPCInteraction unit informations display */
-		if (NPC != undefined) {
-			/* display values if discovered and ? if not */
-			if (NPC.data.type == 'horde') {
-				let display = document.getElementById('hordeSize');
-				if (!NPC.data.playerDiscovered.size) {
-					display.innerHTML = '???';
-					display.style.color = 'white';
-				} else {
-					let hordeSize = NPC.data.getSizeStr();
-					display.innerHTML = hordeSize.size;
-					display.style.color = hordeSize.color;
-				}
-			} else if (NPC.data.type == 'survivor') {
-				let dSize = document.getElementById('survivorSize');
-				let dEquipment = document.getElementById('survivorEquipment');
-				let dType = document.getElementById('survivorType');
-
-				['size', 'equipment', 'type'].forEach((n) => {
-					if (n == 'size') {
-						if (!NPC.data.playerDiscovered.size) {
-							dSize.innerHTML = '???';
-							dSize.style.color = 'white';
-						} else {
-							let estimate = NPC.data.playerDiscovered.sizeEstimate;
-							dSize.innerHTML = `${estimate[0]} - ${estimate[1]} members`;
-						}
-					} else if (n == 'equipment') {
-						if (!NPC.data.playerDiscovered.equipment) {
-							dEquipment.innerHTML = '?';
-							dEquipment.style.color = 'white';
-						} else {
-							let equipStr = NPC.data.getEquipStr();
-							dEquipment.innerHTML = equipStr.str;
-							dEquipment.style.color = equipStr.color;
-						}
-					} else if (n == 'type') {
-						if (!NPC.data.playerDiscovered.type) {
-							dType.innerHTML = '?';
-							dType.style.color = 'white';
-						} else {
-							let typeStr = NPC.data.getTypeStr();
-							dType.innerHTML = typeStr.str;
-							dType.style.color = typeStr.color;
-						}
-					}
-				});
-			} else { console.error(new Error('invalid target data type.')); }
-		}
-	}
-	attack(target) {
-		if (target instanceof NPC) {
-			/* VS HORDE */
-			if (target.data instanceof Horde) {
-				this.pos = { x: target.x, y: target.y };
-				moveElementOnTileMap(document.getElementById(g('partyIcon', this.gn)), `map${target.x}_${target.y}`);
-				updateGroupMovementMap(this.gn);
-				target.move(Math.sign(rand(-50, 50)), Math.sign(rand(-50, 50)));
-			}
-			/* VS SURVIVOR */
-			else if (target.data instanceof Survivor) {
-				/* move to enemy position */
-				this.pos = { x: target.x, y: target.y };
-				moveElementOnTileMap(document.getElementById(g('partyIcon', this.gn)), `map${target.x}_${target.y}`);
-				updateGroupMovementMap(this.gn);
-				target.move(Math.sign(rand(-50, 50)) + target.x, Math.sign(rand(-50, 50)) + target.y);
-
-				/* Ammo calculation */
-				let ammoLoss = rand(target.data.members, target.data.members * 5);
-				if (ammoLoss >= this.inventory.ammo) {
-					this.inventory.ammo = 0;
-				} else {
-					this.inventory.ammo -= ammoLoss;
-				}
-
-				/* outcome calculation */
-				let difficulty = (target.data.members * target.data.equipment) / this.people.getTotalMembers() * 100;
-				let outcome = rand(0, 100) + difficulty;
-
-				/* Get rekt */
-				if (outcome > 75) {
-					let losses = rand(1, this.members);
-					console.log()
-					let enemyLosses = rand(1, target.members / 2);
-					this.setNPCNotif(losses + ' members of the group died in the assault. We killed ' + enemyLosses + ' of them.', 'red');
-
-					this.members -= losses;
-					target.members -= enemyLosses;
-
-					target.blink('red', 200);
-				}
-				/* Kill em all */
-				else if (outcome > 40) {
-					let lp = new LootPool(
-						new LootPoolItem('fuel', 1, 2, 2),
-						new LootPoolItem('ammo', 2, 6, 3),
-						new LootPoolItem('metal', 2, 3, 1),
-						new LootPoolItem('food', 3, 12, 5),
-						new LootPoolItem('wood', 4, 7, 3)
-					);
-
-					let loot = lp.randomizeLoot(2, 4);
-					loot.applyMultiplier(target.members);
-					loot.addToInv(this.inventory);
-					this.setNPCNotif('The group was able to kill all enemies. ' + generateResourceChangeList(loot));
-
-					target.remove();
-				}
-				/* capture some */
-				else {
-					this.setNPCNotif('The group was able to capture some of the enemies.')
-
-				}
-				this.createNPCInteractionOptions(target);
-			} else {
-				console.error(new Error('invalid target data type.'));
-			}
-		} else {
-			console.error(new Error('invalid target.'));
-		}
-		updateGroupInfo();
-	}
-	gatherInfo(target) {
-		if (target instanceof NPC) {
-			if (target.data instanceof Horde) {
-				target.data.playerDiscovered.size = true;
-				let display = document.getElementById('hordeSize');
-				let hordeSize = target.data.getSizeStr();
-				display.innerHTML = hordeSize.size;
-				display.style.color = hordeSize.color;
-				this.setNPCNotif('The group came back with information.');
-			} else if (target.data instanceof Survivor) {
-				let pool = ['size', 'equipment', 'type'];
-				pool = pool.filter((el) => !target.data.playerDiscovered[el]);//remove already discovered elements from the pool
-				let discoveries = discover(pool);
-				discoveries.forEach((n) => {
-					if (n == 'size') {
-						target.data.playerDiscovered.size = true;
-						let estimateGap = rand(1, Math.ceil(target.data.members / 10));
-						let estimate = [target.data.members - estimateGap, target.data.members + estimateGap];
-						if (estimate[0] <= 0) { estimate[0] = 1; }
-						target.data.playerDiscovered.sizeEstimate = estimate;
-					} else if (n == 'equipment') {
-						target.data.playerDiscovered.equipment = true;
-					} else if (n == 'type' && !target.data.playerDiscovered.type) {
-						target.data.playerDiscovered.type = true;
-					}
-				});
-				this.updateNPCInteraction(target);
-				this.createNPCInteractionOptions(target);
-
-				function discover(pool) {
-					let diversity = rand(1, pool.length);
-					let discoveries = [];
-					for (let i = 0; i < diversity; i++) {
-						let select = rand(0, pool.length - 1);
-						discoveries.push(pool[select]);
-						pool.splice(select, 1);
-					}
-					return discoveries;
-				}
-			} else {
-				console.error(new Error('invalid target data type.'));
-			}
-		} else {
-			console.error(new Error('invalid target.'));
-		}
-		updateGroupInfo();
-	}
-	setNPCNotif(str, color = 'white') {
-		let message = document.getElementById('NPCInteractionMessage');
-		message.innerHTML = str;
-		message.style.color = color;
-	}
-	addPanelListeners() {
-		let party = this;
-		document.getElementById(g('bPartyPlus', this.gn)).addEventListener('click', function () {
-			camp.people.transfer(1, party.people);
-			updateGroupInfo();
-		});
-		document.getElementById(g('bPartyMinus', this.gn)).addEventListener('click', function () {
-			party.people.transfer(1, camp.people);
-			updateGroupInfo();
-		});
-		document.getElementById(g('bSendParty', this.gn)).addEventListener('click', function () { sendParty(party.gn) });
-
-		['food', 'ammo', 'drugs', 'fuel'].forEach((name, undefined, arr) => {
-			let input = document.getElementById(g('n' + firstLetterToUpperCase(name), party.gn));
-			input.addEventListener('input', function () {
-				let newValue = Number(input.value);
-				if (isNaN(newValue)) {
-					newValue = 0;
-					input.value = 0;
-				}
-				input.value = eval(newValue);//gets rid of zero padding that might occur
-				let max = party.vehicle.carry;
-				/* get the total of other items already in the car */
-				let totalOthers = arr.filter((n) => n != name).reduce((t, n) => { return t += party.inventory[firstLetterToLowerCase(n)]; }, 0);
-				let newTotal = newValue + totalOthers;
-				if (newTotal > max || newValue > camp.resources[name]) {
-					input.style.color = 'red';
-					input.value = party.inventory[firstLetterToLowerCase(name)];//Reset the value of the field
-					setTimeout(function () { input.style.color = 'white' }, 500);
-				} else {
-					document.getElementById('groupTotalItems' + party.gn).innerHTML = newTotal;
-					party.inventory[firstLetterToLowerCase(name)] = Number(input.value);
-				}
-			});
-		});
-	}
-}
-
 class Inventory {
 	constructor() {
 		this.food = 0;
@@ -711,9 +334,7 @@ class Site {
 
 class SiteDisplayController {
 	constructor() {
-		this.container = document.getElementById('siteDetContainer');
 		this.content = document.getElementById('siteDet');
-		this.exitButton = document.getElementById('siteExitButton');
 		this.title = document.getElementById('siteTitle');
 		this.header = document.getElementById('siteHeader');
 		this.panelContent = document.getElementById('siteContent');
@@ -735,9 +356,7 @@ class SiteDisplayController {
 
 		this.currentPanel = 'build';
 
-
 		let self = this;
-
 		Object.getOwnPropertyNames(this.panelTabs).forEach((tabName) => {
 			let tab = self.panelTabs[tabName];
 			tab.addEventListener('click', () => self.changePanel(tabName, self));
@@ -745,16 +364,6 @@ class SiteDisplayController {
 	}
 	setTitle(title) {
 		this.title.innerHTML = title;
-	}
-	show() {
-		this.container.classList.remove('hidden');
-		this.updateSize();
-	}
-	hide() {
-		this.container.classList.add('hidden');
-	}
-	isHidden() {
-		return this.container.classList.contains('hidden');
 	}
 	changePanel(panelName, self = this) {
 		self.currentPanel = panelName;
@@ -774,9 +383,42 @@ class SiteDisplayController {
 			self.panelTabs[name].classList.remove('sitePanelBarTab_clicked');
 		}
 		function closeOtherThan(name) {
-			let names = ['overview', 'build', 'garage', 'scavenging', 'research'];
+			let names = Object.getOwnPropertyNames(self.panels);
 			names.filter((n) => n != name).forEach((n) => closePanel(n));
 		}
+	}
+	updateSize() {
+		let tabsH = this.panelTabs.build.offsetHeight;
+		let containerH = IGWindow.content.offsetHeight;
+		let headerH = this.header.offsetHeight;
+
+		this.panelContent.style.top = tabsH + 'px';
+		this.panelContent.style.height = containerH - (tabsH + headerH + 10) + 'px';
+	}
+}
+
+class IGWindowController {
+	constructor(){
+		this.container = document.getElementById('IGWindowContainer');
+		this.content = document.getElementById('IGWindow');
+		this.exit = document.getElementById('IGWindowExitButton');
+		this.windows = {
+			site: document.getElementById('siteDet'),
+			groups: document.getElementById('groups'),
+			/* events: document.getElementById('events') */
+		};
+		this.currentWindow = 'site';
+		this.margin = 40; // px
+	}
+	show() {
+		this.container.classList.remove('hidden');
+		this.updateSize();
+	}
+	hide() {
+		this.container.classList.add('hidden');
+	}
+	isHidden() {
+		return this.container.classList.contains('hidden');
 	}
 	updateSize() {
 		let panel = document.getElementById('leftpanel');
@@ -784,15 +426,28 @@ class SiteDisplayController {
 		let width = window.innerWidth;
 		let height = window.innerHeight;
 		let panelWidth = panel.offsetWidth;
-		this.container.style.width = width - panelWidth + 'px';
-		this.content.style.width = (width - panelWidth - 40) + 'px';
-		this.content.style.height = (height - 40) + 'px';
 
-		let tabsH = this.panelTabs.build.offsetHeight;
-		let containerH = this.content.offsetHeight;
-		let headerH = this.header.offsetHeight;
-		this.panelContent.style.top = tabsH + 'px';
-		this.panelContent.style.height = containerH - (tabsH + headerH + 10) + 'px';
+		this.container.style.width = width - panelWidth + 'px';
+		this.content.style.width = (width - panelWidth - this.margin) + 'px';
+		this.content.style.height = (height - this.margin) + 'px';
+
+		siteDet.updateSize();
+	}
+	changeWindow(windowName, self = this) {
+		self.currentWindow = windowName;
+		closeOtherThan(windowName);
+		openPanel(windowName);
+
+		function openPanel(name) {
+			self.windows[name].classList.remove('hidden')
+		}
+		function closePanel(name) {
+			self.windows[name].classList.add('hidden');
+		}
+		function closeOtherThan(name) {
+			let names = Object.getOwnPropertyNames(self.windows);
+			names.filter((n) => n != name).forEach((n) => closePanel(n));
+		}
 	}
 }
 

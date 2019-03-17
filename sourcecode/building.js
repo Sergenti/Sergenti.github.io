@@ -1,12 +1,12 @@
 class BuildController {
 	constructor() {
 
-		/* this.indexTable = {
+		this.indexTable = {
 			house: 0,
-			windmill: 2,
-			fence: 3,
-			bullet_factory: 4,
-		}; */
+			garden: 1,
+			fence: 2,
+			garage: 3,
+		};
 
 		this.buildings = [
 
@@ -81,7 +81,14 @@ class BuildController {
 				onBuild: function (garageQty) {
 					if (garageQty == 0) document.getElementById('garageTab').classList.remove('hidden');
 
-					//scavenging.parties.push(new Party(garageNumber));
+					for(let gn = 0; gn < scavenging.getMaxParties(); gn++){
+						let party = scavenging.parties[gn];
+						if(party.unlocked == false){
+							party.unlocked = true;
+							party.updateVignette();
+							break;
+						}
+					}
 				},
 			}),
 			/* Windmill */
@@ -187,13 +194,13 @@ class BuildController {
 		this.updateDisplayers();
 	}
 	updateButtons() {
-		const resourceNames = ['wood', 'metal', 'concrete', 'cloth'];
+		const resourceNames = ['wood', 'metal', 'concrete', 'cloth', 'electronics'];
 
-		this.buildings.forEach(b => {
-			let button = document.getElementById(`${b.idName}_buyButton`);
+		this.buildings.forEach(building => {
+			let button = document.getElementById(`${building.idName}_buyButton`);
 
-			let buildingQty = camp.buildingCounter.getQty(b.idName);
-			let qtyDisplay = document.getElementById(`${b.idName}_qty`);
+			let buildingQty = camp.buildingCounter.getQty(building.idName);
+			let qtyDisplay = document.getElementById(`${building.idName}_qty`);
 			if(buildingQty > 0){
 				if(qtyDisplay.classList.contains('hidden')){
 					qtyDisplay.classList.remove('hidden');
@@ -202,20 +209,25 @@ class BuildController {
 			}
 			
 
-			let resTest = this.hasEnoughResources(b, camp.resources)
+			let resTest = this.hasEnoughResources(building, camp.resources)
 			if (resTest == true) {
 				if (button.disabled) {
+					/* enable the button */
 					button.disabled = false;
-					resourceNames.forEach(n => {
-						let resQtyDisplay = document.getElementById(`${b.idName}_${n}_cost`);
-						resQtyDisplay.style.removeProperty('color');
-					})
+					/* change color of cost text to original */
+					resourceNames.forEach(resName => {
+						if(building.resources[resName] > 0){
+							let resQtyDisplay = document.getElementById(`${building.idName}_${resName}_cost`);
+							resQtyDisplay.style.removeProperty('color');
+						}
+					});
 				}
 			} else {
+				/* disable the button */
 				if (!button.disabled) button.disabled = true;
-
+				/* change the color of cost text to red */
 				resTest.forEach(obj => {
-					let resQtyDisplay = document.getElementById(`${b.idName}_${obj.name}_cost`);
+					let resQtyDisplay = document.getElementById(`${building.idName}_${obj.name}_cost`);
 					resQtyDisplay.style.color = 'rgb(204, 63, 75)';
 				});
 			}
