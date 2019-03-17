@@ -1,5 +1,4 @@
-<div style="text-align:center"><img src ="https://raw.githubusercontent.com/Sergenti/zombiegame/master/img/devroadster.gif" /></div>
-
+![tank](https://raw.githubusercontent.com/Sergenti/zombiegame/master/img/devroadster.gif)
 # zombiegame
 An overly ambitious HTML DOM game I code on the weekends
 
