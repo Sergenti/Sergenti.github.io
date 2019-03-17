@@ -1,6 +1,6 @@
 ![alt text][logo]
 
-[logo]: https://github.com/Sergenti/zombiegame/img/npc/hordeicon.png "The horde"
+[logo]: https://github.com/Sergenti/zombiegame/img/devroadster.gif "tank"
 
 # zombiegame
 An overly ambitious HTML DOM game I code on the weekends
