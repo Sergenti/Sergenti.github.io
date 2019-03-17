@@ -1,4 +1,4 @@
-![tank](https://github.com/Sergenti/zombiegame/img/devroadster.gif)
+![tank](https://raw.githubusercontent.com/Sergenti/zombiegame/master/img/devroadster.gif)
 
 # zombiegame
 An overly ambitious HTML DOM game I code on the weekends
