@@ -246,9 +246,17 @@ class BuildController {
 				/* disable the button */
 				if (!button.disabled) button.disabled = true;
 				/* change the color of cost text to red */
-				resTest.forEach(obj => {
-					let resQtyDisplay = document.getElementById(`${building.idName}_${obj.name}_cost`);
-					resQtyDisplay.style.color = 'rgb(204, 63, 75)';
+				let redNames = resTest.map((obj) => obj.name);
+
+				resourceNames.forEach(resName => {
+					if(building.resources[resName] > 0){
+						let resQtyDisplay = document.getElementById(`${building.idName}_${resName}_cost`);
+						if(redNames.includes(resName)){
+							resQtyDisplay.style.color = 'rgb(204, 63, 75)';
+						} else {
+							resQtyDisplay.style.removeProperty('color');
+						}
+					}
 				});
 			}
 		});

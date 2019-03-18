@@ -79,10 +79,10 @@ class Party {
 		Object.getOwnPropertyNames(this.inventory).forEach(function (property) {
 			self.inventory[property] = 0;
 		});
-		document.getElementById('resourceInputs' + this.gn).classList.remove('hidden');
-		document.getElementById('inventory' + this.gn).classList.add('hidden');
+		document.getElementById('resourceInputs').classList.remove('hidden');
+		document.getElementById('groupInventory').classList.add('hidden');
 		['food', 'ammo', 'fuel'].forEach((n) => {
-			let input = document.getElementById('n' + firstLetterToUpperCase(n) + this.gn);
+			let input = document.getElementById('n' + firstLetterToUpperCase(n));
 			input.classList.remove('hidden');
 		});
 		this.icon.parentElement.removeChild(this.icon);
@@ -449,12 +449,12 @@ class Party {
 		switch (type) {
 			case 'camp':
 				createGroupOption(gn, 'end mission', function () {
-					this.setNotif('All scavenged equipment is safe in your camp. The scavengers went back to their family for the night.', 'lightgreen');
-					this.transferInventoryToCamp();
-					this.reset();
+					party.setNotif('All scavenged equipment is safe in your camp. The scavengers went back to their family for the night.', 'lightgreen');
+					party.transferInventoryToCamp();
+					party.reset();
 					updateMetrics();
-					this.updateInfo();
-					this.resetOptions();
+					party.updateInfo();
+					party.resetOptions();
 					let overlay = document.querySelector('.overlaytile-green');
 					if (overlay != null) { removeMovementMap(); }
 				});
@@ -501,18 +501,18 @@ class Party {
 				let isThereFuel = rand(0, 100);
 				if (isThereFuel < player.karma) {
 					let fuelLoot = randNormal(1, 3, 5);
-					this.setNotif(`We were able to scavenge ${fuelLoot} fuel from nearby cars.<br> It won't get us far though.`, 'lightgreen');
-					this.inventory.fuel += fuelLoot;
+					party.setNotif(`We were able to scavenge ${fuelLoot} fuel from nearby cars.<br> It won't get us far though.`, 'lightgreen');
+					party.inventory.fuel += fuelLoot;
 				} else {
-					this.setNotif(`There is no fuel nearby.`, 'darkred');
+					party.setNotif(`There is no fuel nearby.`, 'darkred');
 				}
-				this.updateInfo();
-				this.updateOptions()
+				party.updateInfo();
+				party.updateOptions()
 			});
 		}
 		/* case when the tile has an adjacent tile that's water */
 		if (hasAdjacentTypeMap(currTile.id, 'water')) {
-			if (this.time >= 1 && currTile.typeIndex != map.indexTable.camp) {
+			if (party.time >= 1 && currTile.typeIndex != map.indexTable.camp) {
 				createGroupOption(gn, 'Fish (1h)', function () {
 					this.time -= 1;
 					let success = rand(0, 100);
@@ -531,10 +531,10 @@ class Party {
 						msg += `They found nothing !`;
 					}
 					msg += ` (+${food} Food)`;
-					this.setNotif(msg);
-					this.inventory.food += food;
-					this.updateInfo();
-					this.updateOptions();//display 'transfer loot' option if fishing on camp tile
+					party.setNotif(msg);
+					party.inventory.food += food;
+					party.updateInfo();
+					party.updateOptions();//display 'transfer loot' option if fishing on camp tile
 				});
 			}
 		}
@@ -554,7 +554,6 @@ class Party {
 				party.updateOptions();
 			}
 		}
-
 	}
 	resetOptions() {
 		let commands = document.getElementById('partyCommands');
@@ -593,7 +592,8 @@ class Party {
 			let pop = document.getElementById(`groupVignettePop${this.gn}`);
 			pop.innerHTML = this.people.getTotalMembers();
 			let popMax = document.getElementById(`groupVignettePopMax${this.gn}`);
-			popMax.innerHTML = this.vehicle.seats;
+			let seats = this.vehicle.seats;
+			popMax.innerHTML = seats == undefined ? 15 : seats;
 		}
 	}
 	toggleMovementMap() {

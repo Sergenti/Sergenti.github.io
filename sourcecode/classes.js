@@ -101,8 +101,9 @@ class TileData {
 					lootPool = new LootPool(
 						new LootPoolItem('metal', f(2), f(5), 3),
 						new LootPoolItem('concrete', f(3), f(6), 2),
-						new LootPoolItem('electronics', f(1), f(5), 2),
-						new LootPoolItem('ammo', f(1), f(3), 1)
+						new LootPoolItem('electronics', f(3), f(11), 2),
+						new LootPoolItem('ammo', f(1), f(3), 1),
+						new LootPoolItem('cloth', f(6), f(18), 2)
 					);
 					break;
 				case 'city_l':
@@ -112,7 +113,8 @@ class TileData {
 						new LootPoolItem('drugs', f(2), f(4), 2),
 						new LootPoolItem('food', f(9), f(20), 4),
 						new LootPoolItem('ammo', f(8), f(15), 3),
-						new LootPoolItem('metal', f(1), f(4), 1)
+						new LootPoolItem('metal', f(1), f(4), 1),
+						new LootPoolItem('cloth', f(4), f(14), 3)
 					)
 					break;
 				case 'city_m':
