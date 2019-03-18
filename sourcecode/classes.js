@@ -12,7 +12,7 @@ class Player {
 		this.peopleIdCounter = 0;
 		this.siteIdCounter = 0;
 
-		this.farmProductionMultiplier = 1;
+		this.farmProductionMultiplier = 1.75;
 
 		this.researchUnlocked = false;
 		this.garageUnlocked = false;
@@ -31,7 +31,7 @@ class Player {
 		return camp.people.members.reduce((total, person) => total += person.sick ? 1 : 0, 0);
 	}
 	getTotalWorking() {
-		return camp.buildingCounter.count.reduce((t, countObj) => t += countObj.working, 0) + scavenging.getTotalScavengers();
+		return camp.getWorkers() + scavenging.getTotalScavengers();
 	}
 }
 /* compressed for storage */
@@ -337,8 +337,16 @@ class Site {
 
 		player.siteIdCounter++;
 	}
-	createParty() {
+	/* createParty() {
 		scavenging.parties.push(new Party(scavenging.parties.length, this));
+	} */
+	getWorkers() {
+		return this.buildingCounter.count.reduce((t, countObj) => t += countObj.workers, 0);
+	}
+	getAvailableWorkers() {
+		const total = camp.people.getTotalMembers();
+		const workers = this.getWorkers();
+		return total - workers;
 	}
 }
 

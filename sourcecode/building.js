@@ -44,7 +44,11 @@ class BuildController {
 				limit: false,
 				workerCapacity: 5,
 				onDayEnd: function (qty) {
-					camp.resources.addResource('food', Math.round(5 * player.farmProductionMultiplier * camp.buildingCounter.getWorkers('garden') * qty));
+					const averageWorkersPerGarden = camp.buildingCounter.getWorkers('garden') / qty;
+					const productionPerGarden = player.farmProductionMultiplier * averageWorkersPerGarden;
+					const totalProduction = Math.round(productionPerGarden * qty)
+					camp.resources.addResource('food', totalProduction);
+					console.log('Garden production today: ' + totalProduction + ' food');
 					updateMetrics();
 				}
 			}),
@@ -83,9 +87,9 @@ class BuildController {
 						document.getElementById('garageTab').classList.remove('hidden');
 						player.garageUnlocked = true;
 					}
-					for(let gn = 0; gn < scavenging.getMaxParties(); gn++){
+					for (let gn = 0; gn < scavenging.getMaxParties(); gn++) {
 						let party = scavenging.parties[gn];
-						if(party.unlocked == false){
+						if (party.unlocked == false) {
 							party.unlocked = true;
 							party.updateVignette();
 							break;
@@ -198,7 +202,7 @@ class BuildController {
 			camp.resources.addResource(n, -building.resources[n]);
 		});
 		camp.buildingCounter.addBuilding(building.idName);
-		
+
 		/* trigger building onBuild method */
 		if (building.onBuild != undefined) {
 			building.onBuild(camp.buildingCounter.getByIdName(building.idName).qty);
@@ -207,6 +211,11 @@ class BuildController {
 		if (camp.buildingCounter.getQty(building.idName) == building.limit && building.limit != false) {
 			document.getElementById(`${building.idName}_buyButton`).classList.add('hidden');
 			document.querySelector(`#${building.idName}_buyButton + br`).remove();//remove the br next to the button
+		}
+
+		/* reveal displayer if needed */
+		if (camp.buildingCounter.getQty(building.idName) == 1 && building.workerCapacity != undefined && building.workerCapacity != 0) {
+			document.getElementById(`${building.idName}_site_displayer`).classList.remove('hidden');
 		}
 
 		updateMetrics();
@@ -221,13 +230,13 @@ class BuildController {
 
 			let buildingQty = camp.buildingCounter.getQty(building.idName);
 			let qtyDisplay = document.getElementById(`${building.idName}_qty`);
-			if(buildingQty > 0){
-				if(qtyDisplay.classList.contains('hidden')){
+			if (buildingQty > 0) {
+				if (qtyDisplay.classList.contains('hidden')) {
 					qtyDisplay.classList.remove('hidden');
 				}
 				qtyDisplay.innerHTML = ` (${buildingQty})`;
 			}
-			
+
 
 			let resTest = this.hasEnoughResources(building, camp.resources)
 			if (resTest == true) {
@@ -236,7 +245,7 @@ class BuildController {
 					button.disabled = false;
 					/* change color of cost text to original */
 					resourceNames.forEach(resName => {
-						if(building.resources[resName] > 0){
+						if (building.resources[resName] > 0) {
 							let resQtyDisplay = document.getElementById(`${building.idName}_${resName}_cost`);
 							resQtyDisplay.style.removeProperty('color');
 						}
@@ -249,9 +258,9 @@ class BuildController {
 				let redNames = resTest.map((obj) => obj.name);
 
 				resourceNames.forEach(resName => {
-					if(building.resources[resName] > 0){
+					if (building.resources[resName] > 0) {
 						let resQtyDisplay = document.getElementById(`${building.idName}_${resName}_cost`);
-						if(redNames.includes(resName)){
+						if (redNames.includes(resName)) {
 							resQtyDisplay.style.color = 'rgb(204, 63, 75)';
 						} else {
 							resQtyDisplay.style.removeProperty('color');
@@ -261,9 +270,9 @@ class BuildController {
 			}
 		});
 	}
-	updateDisplayers(){
+	updateDisplayers() {
 		this.buildings.forEach(b => {
-			if(b.workerCapacity > 0) b.updateDisplayer();
+			if (b.workerCapacity != 0 && b.workerCapacity != undefined) b.updateDisplayer();
 		});
 	}
 	getByIdName(idName) {
@@ -349,7 +358,7 @@ class Building {
 		let displayer = document.createElement('div');
 		displayer.setAttribute('id', `${this.idName}_site_displayer`)
 		displayer.setAttribute('class', 'buildingDisplayer');
-		if(camp.buildingCounter.getByIdName(this.idName).qty == 0){
+		if (camp.buildingCounter.getByIdName(this.idName).qty == 0) {
 			displayer.classList.add('hidden');
 		}
 
@@ -378,15 +387,15 @@ class Building {
 		bPlus.setAttribute('id', `${this.idName}_worker_plus`);
 		bPlus.addEventListener('click', () => {
 			camp.buildingCounter.addWorkers(self.idName, 1);
-			self.updateDisplayer();
+			updateMetrics();
 		});
-		let bMinus= document.createElement('input');
+		let bMinus = document.createElement('input');
 		bMinus.setAttribute('type', 'button');
 		bMinus.setAttribute('value', '-');
 		bMinus.setAttribute('id', `${this.idName}_worker_minus`);
 		bMinus.addEventListener('click', () => {
 			camp.buildingCounter.addWorkers(self.idName, -1);
-			self.updateDisplayer();
+			updateMetrics();
 		});
 
 		buttonsContainer.appendChild(bMinus);
@@ -397,12 +406,12 @@ class Building {
 		displayer.appendChild(buttonsContainer);
 		document.getElementById('buildingsContainer').appendChild(displayer);
 		this.updateDisplayer();
-		//console.log(displayer);
 	}
 	updateDisplayer() {
-		if(this.workerCapacity > 0){
+		if (this.workerCapacity != 0 && this.workerCapacity != undefined) {
 			let workers = camp.buildingCounter.getWorkers(this.idName);
 			let totCap = this.workerCapacity * camp.buildingCounter.getQty(this.idName);
+			let availableWorkers = camp.getAvailableWorkers();
 
 			let working = document.getElementById(`${this.idName}_working`);
 			let maxWorking = document.getElementById(`${this.idName}_max_working`);
@@ -412,15 +421,20 @@ class Building {
 			// +/- buttons
 			let bPlus = document.getElementById(`${this.idName}_worker_plus`);
 			let bMinus = document.getElementById(`${this.idName}_worker_minus`);
-
-			if(workers >= totCap && bPlus.disabled == false){
+			/* disable + */
+			if ((workers >= totCap || camp.getAvailableWorkers() == 0) && bPlus.disabled == false) {
 				bPlus.disabled = true;
-			} else if(workers < totCap && bPlus.disabled == true){
+			}
+			/* enable + */
+			else if (workers < totCap && camp.getAvailableWorkers() > 0 && bPlus.disabled == true) {
 				bPlus.disabled = false;
 			}
-			if(workers <= 0 && bMinus.disabled == false){
+			/* disable - */
+			if (workers <= 0 && bMinus.disabled == false) {
 				bMinus.disabled = true;
-			} else if(workers > 0 && bMinus.disabled == true){
+			}
+			/* enable - */
+			else if (workers > 0 && bMinus.disabled == true) {
 				bMinus.disabled = false;
 			}
 		} else {

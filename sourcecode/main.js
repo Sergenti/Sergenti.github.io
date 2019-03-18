@@ -212,15 +212,14 @@ let IGWindow = new IGWindowController();
 	document.getElementById('bNextDay').addEventListener('click', nextDay);
 	document.getElementById('bGroups').addEventListener('click', toggleGroupsPanel);
 	document.getElementById('bCamp').addEventListener('click', () => {
+		updateMetrics();
 		if (IGWindow.isHidden()) {
 			siteDet.setTitle('CAMP');
-			build.updateButtons();
 			IGWindow.changeWindow('site');
 			IGWindow.show();
 		} else {
 			if (IGWindow.currentWindow != 'site') {
 				siteDet.setTitle('CAMP');
-				build.updateButtons();
 				IGWindow.changeWindow('site');
 			} else {
 				IGWindow.hide();
@@ -268,11 +267,11 @@ let IGWindow = new IGWindowController();
 	/* siteDet setup */
 	build.fillBuy();
 	build.fillDisplayers();
-	build.updateButtons();
-	build.updateDisplayers();
 
 	addClickSound();
 	unlockHorizontalScrolling('map');
+
+	/* update all displayers in the game */
 	updateMetrics();
 
 	/* load preferences (sound)*/
@@ -453,8 +452,8 @@ function clickOnMapTile(tile) {
 	//if map editor is inactive
 	else {
 		if (tileData.type == 'camp') {
+			updateMetrics();
 			siteDet.setTitle('CAMP');
-			build.updateButtons();
 			IGWindow.changeWindow('site');
 			IGWindow.show();
 		}
@@ -494,13 +493,17 @@ function updateMetrics() {
 	});
 	/* update default panel */
 	document.getElementById('dPop').innerHTML = player.getPop();
-	document.getElementById('buildPanelAvWorkers').innerHTML = player.getPop() - player.getTotalWorking();
 	document.getElementById('dMaxPop').innerHTML = camp.maxPeople;
 	document.getElementById('dDayCounter').innerHTML = player.day;
-	['food', 'drugs', 'ammo', 'fuel', 'wood', 'concrete', 'metal', 'cloth', 'electronics'].forEach((name) => elements['d' + firstLetterToUpperCase(name)].innerHTML = camp.resources[name]);
+	['food', 'drugs', 'ammo', 'fuel', 'wood', 'concrete', 'metal', 'cloth', 'electronics']
+		.forEach((name) => elements['d' + firstLetterToUpperCase(name)].innerHTML = camp.resources[name]);
 
 	let sickppl = player.getTotalSick();
 	document.getElementById('dSick').innerHTML = sickppl > 0 ? `<img src="img/gui/pop_sick.png" alt="Sick:" title='Sick'> <span style='color: orange;'>${sickppl}</span>` : '';
+	/* update build window */
+	document.getElementById('buildPanelAvWorkers').innerHTML = camp.getAvailableWorkers();
+	build.updateButtons();
+	build.updateDisplayers();
 }
 function toggleGroupsPanel() {
 	let scPanel = document.getElementById('groupsPanel');

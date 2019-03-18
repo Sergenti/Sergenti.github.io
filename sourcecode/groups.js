@@ -365,7 +365,7 @@ class Party {
 	}
 	updateInfo() {
 		document.getElementById('groupWindowTitle').innerHTML = `Group ${this.gn + 1}`;
-		document.getElementById('dAvPeople').innerHTML = camp.people.getTotalMembers();
+		document.getElementById('dAvPeople').innerHTML = camp.getAvailableWorkers();
 		/* display available time and inventory only if party is in mission */
 		let timeDiv = document.getElementById('partyTimeContainer');
 		if (this.inMission && timeDiv.classList.contains('hidden')) {
