@@ -108,7 +108,7 @@ class BuildController {
 					cloth: 50,
 					electronics: 200,
 				},
-				text: `It's expensive, and it allows you to spend more resources on research.`,
+				text: `It's expensive, and it allows you to spend even more resources on research.`,
 				limit: 1,
 				onBuild: function () {
 					document.getElementById('researchTab').classList.remove('hidden');
@@ -287,7 +287,6 @@ class BuildController {
 		}
 	}
 }
-
 class Building {
 	constructor(parameters) {
 		this.idName = parameters.idName;
@@ -442,7 +441,6 @@ class Building {
 		}
 	}
 }
-
 class BuildingCounter {
 	constructor() {
 		this.count = [];

@@ -8,6 +8,7 @@ class Party {
 		this.vehicle = vehicles.foot;
 		this.time = 0; //Action points
 		this.pos = { x: site.pos.x, y: site.pos.y };
+		this.sendable = true;
 		this.gn = gn;
 		this.icon;
 	}
@@ -422,11 +423,11 @@ class Party {
 			bMinus.disabled = true;
 		}
 		//enable send
-		if (this.people.getTotalMembers() > 0 && bSend.disabled && !this.inMission) {
+		if (this.people.getTotalMembers() > 0 && bSend.disabled && this.sendable && !this.inMission) {
 			bSend.disabled = false;
 		}
 		//disable send
-		if ((this.people.getTotalMembers() <= 0 || this.inMission) && !bSend.disabled) {
+		if ((this.people.getTotalMembers() <= 0 || this.inMission || !this.sendable) && !bSend.disabled) {
 			bSend.disabled = true;
 		}
 
@@ -452,9 +453,15 @@ class Party {
 					party.setNotif('All scavenged equipment is safe in your camp. The scavengers went back to their family for the night.', 'lightgreen');
 					party.transferInventoryToCamp();
 					party.reset();
+					/* disable sending this party until tomorrow */
+					party.sendable = false
+					TimerController.addTimer(() => {
+						party.sendable = true;
+					}, 1)
 					updateMetrics();
 					party.updateInfo();
 					party.resetOptions();
+					
 					let overlay = document.querySelector('.overlaytile-green');
 					if (overlay != null) { removeMovementMap(); }
 				});
@@ -680,7 +687,6 @@ function updateGroupsVignettes() {
 		party.updateVignette();
 	});
 }
-
 function addGroupsWindowListeners() {
 	document.getElementById('bPartyPlus').addEventListener('click', groupButtonPlusClick);
 	document.getElementById('bPartyMinus').addEventListener('click', groupButtonMinusClick);
@@ -711,33 +717,27 @@ function addGroupsWindowListeners() {
 		});
 	});
 }
-
 function groupButtonPlusClick() {
 	let party = scavenging.parties[scavenging.selectedParty];
 	camp.people.transfer(1, party.people);
 	party.updateInfo();
 }
-
 function groupButtonMinusClick() {
 	let party = scavenging.parties[scavenging.selectedParty];
 	party.people.transfer(1, camp.people);
 	party.updateInfo();
 }
-
 function groupButtonSendClick() {
 	let party = scavenging.parties[scavenging.selectedParty];
 	party.send();
 	party.updateInfo();
 }
-
 function createGroupOption(groupNumber, value, handler) {
 	let commandsDiv = document.getElementById('partyCommands');
 	createButton(value, commandsDiv, handler);
 }
-
 function removeMovementMap() {
 	let divs = document.querySelectorAll('.overlaytile-green');
 	divs.forEach((div) => document.getElementById('map').removeChild(div));
 	scavenging.movingParty = undefined;
 }
-

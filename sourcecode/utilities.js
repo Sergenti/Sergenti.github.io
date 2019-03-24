@@ -98,11 +98,11 @@ function getNameFromIdMap(id) {
 function getAdjacentTilesMap(id) {
 	let adjacentTiles = [];
 	let tilePos = getTileXYFromId(id);
-	for (let i = -1; i < 2; i++) {//Y
-		let ty = Number(tilePos.y) + i;
-		for (let j = -1; j < 2; j++) {//X
-			let tx = Number(tilePos.y) + j;
-			if (tx >= 0 && ty >= 0 && tx < map.width && ty < map.height && !(j == 0 && i == 0)) {
+	for (let y = -1; y < 2; y++) {//Y
+		let ty = Number(tilePos.y) + y;
+		for (let x = -1; x < 2; x++) {//X
+			let tx = Number(tilePos.x) + x;
+			if (tx >= 0 && ty >= 0 && tx < map.width && ty < map.height && !(x == 0 && y == 0)) {
 				adjacentTiles.push(map.layout[ty][tx]);
 			}
 		}

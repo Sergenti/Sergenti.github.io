@@ -1,6 +1,6 @@
 class NPC {
-	constructor(name, id, index, type, ) {
-		/* icon, data declared in other methods */
+	constructor(name, id, index, type, position) {
+		/* icon, data declared in other methods of this object*/
 		this.id = id;
 		this.index = index
 		this.name = name;
@@ -16,12 +16,19 @@ class NPC {
 			default:
 				console.error(new Error('invalid type.'));
 		}
-		this.x = rand(0, map.width - 1);
-		this.y = rand(0, map.height - 1);
-		while (map.layout[this.y][this.x].type == 'water') {
+
+		if (position == undefined) {
 			this.x = rand(0, map.width - 1);
 			this.y = rand(0, map.height - 1);
+			while (map.layout[this.y][this.x].type == 'water') {
+				this.x = rand(0, map.width - 1);
+				this.y = rand(0, map.height - 1);
+			}
+		} else {
+			this.x = position.x;
+			this.y = position.y;
 		}
+
 	}
 	move(x, y) {
 		this.x = x;
@@ -45,16 +52,18 @@ class NPC {
 		this.move(this.x, this.y);
 	}
 	blink(color, duration) {
-		this.icon.style.backgroundColor = color;
-		setTimeout(() => {
-			if (this.icon != undefined) {
-				if (NPCs.currentSelected != undefined) {
-					this.icon.style.backgroundColor = NPCs.currentSelected.id == this.id ? 'rgba(255, 255, 0, 0.329)' : this.originalColor;
-				} else {
-					this.icon.style.backgroundColor = this.originalColor;
+		if(this.icon != undefined){
+			this.icon.style.backgroundColor = color;
+			setTimeout(() => {
+				if (this.icon != undefined) {
+					if (NPCs.currentSelected != undefined) {
+						this.icon.style.backgroundColor = NPCs.currentSelected.id == this.id ? 'rgba(255, 255, 0, 0.329)' : this.originalColor;
+					} else {
+						this.icon.style.backgroundColor = this.originalColor;
+					}
 				}
-			}
-		}, duration);
+			}, duration);
+		}
 	}
 	iconClickListener(self) {
 		let greenFilters = document.querySelector('.overlaytile-green');
@@ -311,6 +320,35 @@ class NPCCamp {
 		this.fightCounter = owner.fightCounter;
 		this.assembleCounter = owner.assembleCounter;
 		this.icon = owner.icon;
+	}
+	produceSurvivor(position) {
+		let abort = false;
+		let spawnPosition = getTileXYFromId(selectSpawnTile());
+		/* while the selected tile is of type 'water' or is undefined (OoB), select a new tile
+		   but do not try more than 10 times */
+		for (let i = 0; ['water', undefined].includes(map.layout[spawnPosition.y][spawnPosition.x].type); i++) {
+			if (i == 10) {
+				abort = true;
+				break;
+			}
+			spawnPosition = getTileXYFromId(selectSpawnTile());
+		}
+		if (abort == false) {
+			let unit = new NPC('Survivors', 'agent_survivor' + NPCs.survivorIdCounter, NPCs.survivorIdCounter, 'survivor', spawnPosition);
+			unit.createIcon();
+			NPCs.units.survivors.push(unit);
+			NPCs.survivorIdCounter++;
+			NPCs.reorganizeUnits();
+			return unit;
+		}
+
+		
+
+		function selectSpawnTile() {
+			const adjTiles = getAdjacentTilesMap(`map${position.x}_${position.y}`);
+			const selectedTile = selectRandomFromArray(adjTiles);
+			return selectedTile.id;
+		}
 	}
 }
 
@@ -595,16 +633,24 @@ class NPCController {
 						}
 					}
 
-					/* temp to be replaced with hapiness function or whatever */
-					//let temp = rand(0, 1000);
-					if (unit.data.equipment > 300 && rand(0, 100) > 99) {
-						if (['forest', 'plain'].includes(td.type) && manhattanDistance(unit.x, unit.y, camp.pos.x, camp.pos.y) > 5) {
+					if (['forest', 'plain'].includes(td.type) && manhattanDistance(unit.x, unit.y, camp.pos.x, camp.pos.y) > 5) {
+						/* temp to be replaced with hapiness function or whatever */
+						let temp = rand(0, 1000);
+						if (unit.data.equipment > 300 && temp > 995) {
 							unit.settle();
 							unit.data.equipment -= 150;
 						}
 					}
 
 
+				} else if (unit.data.type == 'settlement') {
+					unit.data.members += 1;
+					if(unit.data.members > 50 && rand(0, 100) > 75){
+						let survivorProduced = unit.data.produceSurvivor({x: unit.x, y: unit.y});
+						if(survivorProduced){
+							unit.data.members -= survivorProduced.data.members;
+						}
+					}
 				}
 			}
 		});

@@ -11,7 +11,10 @@
 </head>
 
 <body>
-	<div id='loadScr'>Loading...</div>
+	<div id='loadScr'>
+		<div id='loadCenter'>Loading...</div>
+		<div id='loadSub'>If you get stuck here, try reloading the page.</div>
+	</div>
 	<div id='game' class='hidden'>
 		<div id='debug'>
 			<div id='debugData'></div>
@@ -26,7 +29,7 @@
 					<!-- default: settlement -->
 					<div id='defaultPanel'>
 						<div id='defaultPanelTitle'>
-							Day Z+<span id='dDayCounter'></span>
+							Day Z + <span id='dDayCounter'></span>
 						</div>
 						<div id='campResources'>
 							<div><img src="img/gui/pop.png" alt="Population: " title='Population'> <span id='dPop'></span>
@@ -252,7 +255,6 @@
 	<script type='text/javascript' src='sourcecode/building.js'></script>
 	<script type='text/javascript' src='sourcecode/npc.js'></script>
 	<script type='text/javascript' src='sourcecode/events.js'></script>
-	<!-- <script type='text/javascript' src='sourcecode/mapData.js'></script> -->
 	<script type='text/javascript' src='sourcecode/tiles.js'></script>
 	<script type='text/javascript' src='sourcecode/main.js'></script>
 </body>

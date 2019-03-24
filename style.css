@@ -24,12 +24,21 @@ h1{
     width: 100%;
     background-color: white;
     text-align: center;
-    line-height: 100vh;
-    font-size: 32px;
+    vertical-align: middle;
     z-index: 5;
     float: left;
     position: fixed;
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
+		font-family: Verdana, Geneva, Tahoma, sans-serif;
+		padding: 200px;
+		box-sizing: border-box;
+}
+#loadCenter{
+	color: rgb(26, 26, 26);
+	font-size: 32px;
+}
+#loadSub{
+	font-size: 20px;
+	color: rgb(87, 87, 87);
 }
 
 input{

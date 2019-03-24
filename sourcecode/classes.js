@@ -12,7 +12,7 @@ class Player {
 		this.peopleIdCounter = 0;
 		this.siteIdCounter = 0;
 
-		this.farmProductionMultiplier = 1.75;
+		this.farmProductionMultiplier = 1.60;//food produced by one farmer in a day on average
 
 		this.researchUnlocked = false;
 		this.garageUnlocked = false;
@@ -528,7 +528,7 @@ class EventDisplayController {
  * 
  *  2. CREATE A LOOT POOL CONTAINING THOSE ITEMS
  *      - create a loot pool using: new LootPool(<item>, <item>, <item>, ...)
- *      put loot pool items as parameters
+ *      put LootPoolItems as parameters
  * 
  *  3. RANDOMIZE SOME LOOT OUT OF THERE
  *      - randomize using: lootPool.randomizeLoot(<diversityMin>, <diversityMax>)

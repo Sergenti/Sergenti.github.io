@@ -1,12 +1,58 @@
+class EventTimerController {
+	constructor() {
+		this.timers = [];
+		this.idCounter = 0;
+	}
+	progress() {
+		this.timers.forEach((timer) => timer.progress());
+	}
+	addTimer(callback, delay) {
+		this.timers.push(new Timer(callback, delay));
+	}
+	removeTimer(id) {
+		this.timers.forEach((timer, i, arr) => {
+			if (timer.id == id) {
+				arr.splice(i, 1);
+			}
+		});
+	}
+}
+
+class Timer {
+	constructor(callback, delay) {
+		this.id = TimerController.idCounter;
+		this.delayCounter = delay;
+		this.callback = callback;
+		TimerController.idCounter++;
+	}
+	/* called each day end */
+	progress() {
+		this.delayCounter -= 1;
+		if (this.delayCounter <= 0) {
+			this.callback();
+			TimerController.removeTimer(this.id);
+		}
+	}
+}
+
+
 function nextDay() {
 	let resChange = document.getElementById('dRecapResourceChange');
 	let messages = document.getElementById('dRecapMessages');
 	/* close site details if opened */
 	if (!IGWindow.isHidden()) { IGWindow.hide(); }
 
+	TimerController.progress();
 	NPCs.progress();
 	scavengingProgress();
 	buildProgress();
+	/* console.log({ 
+		humans: NPCs.getTotalSurvivorMembers(), 
+		zombies: NPCs.getTotalHordeMembers(),
+		hordes: NPCs.units.hordes.length,
+		settlements: NPCs.units.settlements.length,
+		survivors: NPCs.units.survivors.length
+	}); */
 
 	//End of day resource changes
 	/* FOOD */
@@ -115,7 +161,7 @@ function nextDay() {
 } */
 
 function computeDaEvents() {
-	let somethingHappens = rand(0, 100) > 75 ? true : false;
+	let somethingHappens = rand(0, 100) > 80 ? true : false;
 	if (somethingHappens) {
 		evtDet.options.innerHTML = '';
 		let randomEvent = rand(0, 100);
@@ -129,7 +175,7 @@ function computeDaEvents() {
 			unique = unique > 65 ? true : false;
 			//unique = true;
 			if (unique) {
-				evtDet.setMessage('A lone survivor arrived in the night. He says he is willing to work for shelter.');
+				evtDet.setMessage('A lone survivor arrived in the night. He wants to join.');
 
 				/* OPTIONS */
 
@@ -245,7 +291,7 @@ function computeDaEvents() {
 					let resMsg;
 					let msg;
 					if (killed) {
-						let strangerKilled = rand(1, numberStrangers)
+						let strangerKilled = randNormal(1, numberStrangers, numberStrangers);
 						if (strangerKilled == numberStrangers) {
 							msg = 'We managed to kill all the strangers';
 						} else {
@@ -255,14 +301,6 @@ function computeDaEvents() {
 							else {
 								msg = 'We were only able to kill one of them, the others escaped'
 							}
-
-							/* modifiy loot qty in relation to number of strangers killed */
-							/* loot.items.forEach((item, i, arr) => {
-									item.qty = Math.round(item.qty / (numberStrangers / strangerKilled));//reduce loot if not all killed
-									if (item.qty == 0) {
-											arr.splice(i, 1);//remove loot if 0 qty;
-									}
-							}); */
 							loot.applyMultiplier(1 / (numberStrangers / strangerKilled));
 						}
 						/* apply loot */
@@ -301,6 +339,20 @@ function computeDaEvents() {
 
 				/* END OPTIONS */
 
+			}
+		}
+
+		/* 
+				Zombie attack
+		*/
+
+		else if (randomEvent > 50) {
+			let danger = rand(1, 100);
+			if(danger > 30){
+				evtDet.setMessage('A dozen of zombies are wandering out near the camp.');
+				evtDet.addOption('Kill them', function () {
+					
+				}, camp.getAvailableWorkers() > 0 && camp.resources.ammo > 0);
 			}
 		}
 
