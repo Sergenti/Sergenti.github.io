@@ -17,6 +17,7 @@ class Player {
 		this.researchUnlocked = false;
 		this.garageUnlocked = false;
 
+		this.version = version;
 		/* this.unlockedBuildings = [
 				'house', 
 		]; */

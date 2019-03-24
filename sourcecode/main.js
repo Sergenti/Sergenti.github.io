@@ -59,23 +59,6 @@ let editor = {
 		}
 	},
 	export: function () {
-		let log = '';
-		map.layout.forEach((line, y) => {
-			log += '[';
-			line.forEach((elem, x) => {
-				log += elem.typeIndex;
-				if ((x != map.width - 1 && y != map.height - 1) || x != map.width - 1) {
-					log += ','
-				}
-			});
-			log += ']';
-			if (y != map.height - 1) {
-				log += ',';
-			}
-		});
-		return log;
-	},
-	exportJSON: function () {
 		let arr = [];
 		map.layout.forEach((line, y) => {
 			arr.push([]);
@@ -258,21 +241,16 @@ let TimerController = new EventTimerController();
 	window.addEventListener('resize', windowResized);
 
 	/* load preferences (sound)*/
-	let forceNewGame = false;
 	const preferences = fetchPreferences();
 	if (preferences) {
 		sounds.enabled = preferences.sound_enable;
-		console.log(preferences);
-		if (preferences.version != version) {
-			alert('The version of your savefile is outdated. We will generate a new game for you. Sorry.');
-			forceNewGame = true;
-		}
 		/* if the sound is not enabled, change the sound toggler image accordingly (by default, the icon is set on) */
 		if (sounds.enabled == false) {
 			let toggler = document.getElementById('soundToggler');
 			toggler.src = 'img/gui/no_sound.png';
 			toggler.alt = 'Off';
 			toggler.title = 'Sound Off';
+			document.getElementById('bMusic').classList.add('hidden');
 		}
 	}
 	/* open maps and data from save if exist, otherwise, generate new game */
@@ -281,11 +259,21 @@ let TimerController = new EventTimerController();
 	['mapJSON', 'playerDataJSON'].forEach((prop) => {
 		if (!localStorage.hasOwnProperty(prop)) { saved = false }
 	})
+
 	/* open saved game */
-	if (saved == true && forceNewGame == false) {
-		openSavedGame();
-		document.getElementById('bDeleteSave').classList.remove('hidden');
-		console.log('game save detected');
+	if (saved == true) {
+		/* version check */
+		const tempVersion = JSON.parse(localStorage.getItem('playerDataJSON')).version;
+		if (tempVersion != version) {
+			alert('The version of your savefile is outdated. We will generate a new game for you. Sorry.');
+			localStorage.clear();
+			await newGame();
+		} else {
+			openSavedGame();
+		
+			document.getElementById('bDeleteSave').classList.remove('hidden');
+			console.log('game save detected');
+		}
 	}
 	/* create new game */
 	else {
@@ -795,7 +783,6 @@ function deleteSaveGame() {
 function savePreferences() {
 	let pref = {
 		sound_enable: sounds.enabled,
-		version: version,
 	}
 	localStorage.setItem('preferences', JSON.stringify(pref));
 }
@@ -809,10 +796,9 @@ function fetchPreferences() {
 
 function fetchMapData(){
 	return fetch('./sourcecode/mapdata.json')
-		.then(result => {
+	.then(result => {
 			return result.json();
-		})
-		.then((mapJSON) => {
+		}).then((mapJSON) => {
 			return mapJSON.mapData;
 		})
 	
