@@ -73,6 +73,7 @@
 							<div id='NPCSurvivor' class='hidden'>
 								<div>Index: <span id='NPCSurvivorIndex'></span></div>
 								<div>ID: <span id='NPCSurvivorId'></span></div>
+								<div>status: <span id='NPCSurvivorStatus'></span></div>
 								<div>Members: <span id='NPCSurvivorMembers'></span></div>
 								<div>Equipment: <span id='NPCEquipment'></span></div>
 								<div>Aggressivity: <span id='NPCAggro'></span></div>
@@ -94,6 +95,7 @@
 							<div id='survivorInteractionMessage' class='hidden'>
 								<div>Size: <span id='survivorSize'>?</span></div>
 								<div>Equipment: <span id=survivorEquipment>?</span></div>
+								<div>Status: <span id='survivorStatus'>?</span></div>
 								<div>Type: <span id='survivorType'>?</span></div>
 							</div>
 						</div>
@@ -191,8 +193,8 @@
 										 min='0' class='inventoryNum'></div>
 									<div><img src="img/gui/resources/ammo.png" alt="Ammo:" title='Ammo'> <input id='nAmmo' type="number" value='0'
 										 min='0' class='inventoryNum'></div>
-									<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <input id='nDrugs' type="number"
-										 value='0' min='0' class='inventoryNum'></div>
+									<div><img src="img/gui/resources/drugs.png" alt="Drugs:" title='Drugs'> <input id='nDrugs' type="number" value='0'
+										 min='0' class='inventoryNum'></div>
 									<div><img src="img/gui/resources/fuel.png" alt="Fuel:" title='Fuel'> <input id='nFuel' type="number" value='0'
 										 min='0' class='inventoryNum'></div>
 								</div>
@@ -214,6 +216,20 @@
 								hours</div>
 							<div id='partyCommands' class='partyCommands'></div>
 							<div id='dPartyNotif' class='partyNotif'></div>
+						</div>
+						<div id='trade' class='hidden'>
+							<div id='tradePlayerContainer'>
+								<div class='tradeContainerTitle'>Your stuff</div>
+								<div class='tradeInventoryContainer'>
+
+								</div>
+							</div>
+							<div id='tradeNPCContainer'>
+								<div class='tradeContainerTitle'>Their stuff</div>
+								<div class='tradeInventoryContainer'>
+
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

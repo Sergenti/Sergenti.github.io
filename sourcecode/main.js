@@ -7,7 +7,7 @@ const displayEndOfDayRecap = false;
 const displayEndOfDayEvents = false;
 const scavengeableTypes = ['plain', 'factory', 'city_s', 'city_m', 'city_l', 'forest'];
 const zombieFightEfficiency = 1 / 30; // zombies / humans
-const version = 'alpha 0.5';
+const version = 'alpha 0.5.1';
 
 let player = new Player();
 let build = new BuildController();
@@ -263,14 +263,15 @@ let TimerController = new EventTimerController();
 	/* open saved game */
 	if (saved == true) {
 		/* version check */
-		const tempVersion = JSON.parse(localStorage.getItem('playerDataJSON')).version;
-		if (tempVersion != version) {
+		const tempPlayerData = JSON.parse(localStorage.getItem('playerDataJSON')).player;
+		if (tempPlayerData.version != version) {
+			console.log('corrupted or outdated savefile: ', tempPlayerData);
+			console.log('current version: ' + version);
 			alert('The version of your savefile is outdated. We will generate a new game for you. Sorry.');
 			localStorage.clear();
 			await newGame();
 		} else {
 			openSavedGame();
-		
 			document.getElementById('bDeleteSave').classList.remove('hidden');
 			console.log('game save detected');
 		}

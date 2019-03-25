@@ -247,7 +247,7 @@ class Inventory {
 		}
 	}
 	forAll(callback) {
-		Object.getOwnPropertyNames(this).forEach(callback);
+		Object.getOwnPropertyNames(this).forEach((resource) => callback(resource));
 	}
 }
 

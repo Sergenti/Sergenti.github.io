@@ -145,7 +145,7 @@ class Party {
 			if (party.time >= 3) {
 				createOption('Gather info (3h)', () => gatherInfo(NPC));
 			}
-			createOption('Lure in another direction', () => { });
+			createOption('Lure in another direction (does nothing yet)', () => { });
 		}
 		/* 
 				SURVIVOR
@@ -153,6 +153,9 @@ class Party {
 		else if (NPC.data instanceof Survivor) {
 			if (party.time >= 1) {
 				createOption('Attack', () => attack(NPC));
+			}
+			if (party.time >= 2 && NPC.data.status == 'unknown') {
+				createOption('Contact', () => contact(NPC));
 			}
 			if (party.time >= 3) {
 				createOption('Gather info (3h)', () => gatherInfo(NPC));
@@ -165,20 +168,26 @@ class Party {
 
 		function gatherInfo(NPC) {
 			if (getDistance(party.pos.x, party.pos.y, NPC.x, NPC.y) > 1) {
-				party.setNPCNotif('We are too far.', 'red');
+				party.setNPCNotif('We need to get closer fist.', 'orange');
 			} else {
 				party.time -= 3;
 				party.gatherInfo(NPC);
 			}
 		}
-
 		function attack(NPC) {
-
 			if (getDistance(party.pos.x, party.pos.y, NPC.x, NPC.y) > 1) {
-				party.setNPCNotif('We are too far.', 'red');
+				party.setNPCNotif('We need to get closer fist.', 'orange');
 			} else {
 				party.time -= 3;
 				party.attack(NPC);
+			}
+		}
+		function contact(NPC) {
+			if (getDistance(party.pos.x, party.pos.y, NPC.x, NPC.y) > 1) {
+				party.setNPCNotif('We need to get closer fist.', 'orange');
+			} else {
+				party.time -= 3;
+				party.contact(NPC);
 			}
 		}
 
@@ -207,8 +216,9 @@ class Party {
 				let dSize = document.getElementById('survivorSize');
 				let dEquipment = document.getElementById('survivorEquipment');
 				let dType = document.getElementById('survivorType');
+				let dStatus = document.getElementById('survivorStatus');
 
-				['size', 'equipment', 'type'].forEach((n) => {
+				['size', 'equipment', 'status', 'type'].forEach((n) => {
 					if (n == 'size') {
 						if (!NPC.data.playerDiscovered.size) {
 							dSize.innerHTML = '???';
@@ -226,6 +236,10 @@ class Party {
 							dEquipment.innerHTML = equipStr.str;
 							dEquipment.style.color = equipStr.color;
 						}
+					} else if (n == 'status') {
+						let statusStr = NPC.data.getStatusStr();
+						dStatus.innerHTML = statusStr.str;
+						dStatus.style.color = statusStr.color;
 					} else if (n == 'type') {
 						if (!NPC.data.playerDiscovered.type) {
 							dType.innerHTML = '?';
@@ -359,6 +373,30 @@ class Party {
 		}
 		updateGroupInfo();
 	}
+	contact(target) {
+		// compute the status of target
+		const tendency = target.data.getTendency();
+		const stat = (tendency.trade + tendency.assemble) / (tendency.fight * 2);
+		//generate randomized input to determine the nature of the interaction with the player
+		let randomized = 0;
+		if (stat < 0.8) {
+			randomized = randNormal(0, 100, 20);
+		} else if (stat < 1.1) {
+			randomized = randNormal(0, 100, 50);
+		} else if (stat <= 1.4) {
+			randomized = randNormal(0, 100, 80);
+		} else {
+			randomized = randNormal(0, 100, 95);
+		}
+		console.log(stat, randomized);
+		//generate event
+		if (randomized < 15) {
+			target.data.status = 'hostile';
+		}
+	}
+	trade(target) {
+		let targetInventory = target.data.generateTradeInventory();
+	}
 	setNPCNotif(str, color = 'white') {
 		let message = document.getElementById('NPCInteractionMessage');
 		message.innerHTML = str;
@@ -461,7 +499,7 @@ class Party {
 					updateMetrics();
 					party.updateInfo();
 					party.resetOptions();
-					
+
 					let overlay = document.querySelector('.overlaytile-green');
 					if (overlay != null) { removeMovementMap(); }
 				});
@@ -731,6 +769,7 @@ function groupButtonSendClick() {
 	let party = scavenging.parties[scavenging.selectedParty];
 	party.send();
 	party.updateInfo();
+	scrollToTile(camp.pos.x, camp.pos.y);
 }
 function createGroupOption(groupNumber, value, handler) {
 	let commandsDiv = document.getElementById('partyCommands');

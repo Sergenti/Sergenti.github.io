@@ -205,7 +205,6 @@ class NPC {
 			this.y = rand(0, map.height - 1);
 		}
 	}
-
 }
 
 class Horde {
@@ -238,9 +237,10 @@ class Survivor {
 		this.name;
 		this.members = randNormal(3, 15);
 		this.iconsrc = 'img/npc/survivoricon.png';
-		this.trust = randNormal(0, 100);
-		this.aggro = randNormal(0, 100);
-		this.equipment = randNormal(0, 70);
+		this.status = 'unknown';
+		this.trust = randNormal(0, 100, 35);
+		this.aggro = randNormal(0, 100, 65);
+		this.equipment = randNormal(0, 70, 30);
 		this.tradeCounter = 0;
 		this.fightCounter = 0;
 		this.assembleCounter = 0;
@@ -304,6 +304,28 @@ class Survivor {
 			typeStr = { str: 'they look like trustworthy people', color: 'green' };
 		}
 		return typeStr;
+	}
+	getStatusStr() {
+		let statusStr;
+		if (this.status == 'friendly') {
+			statusStr = { str: status, color: 'green' };
+		} else if (this.status == 'neutral') {
+			statusStr = { str: status, color: 'grey' };
+		} else if (this.status == 'hostile'){
+			statusStr = { str: status, color: 'red' };
+		} else if (this.status == 'unknown'){
+			statusStr = { str: status, color: 'white' };
+		}
+		return statusStr;
+	}
+	generateTradeInventory() {
+		let inventory = new Inventory();
+
+		// generate randomized values for each resource
+		inventory.forAll((res) => inventory[res] = Math.round(this.equipment));
+		// ...later
+
+		return inventory;
 	}
 }
 

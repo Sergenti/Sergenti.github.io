@@ -11,6 +11,7 @@ function firstLetterToLowerCase(str) {
 }
 
 function getPos(el) {
+	// obviously from stackoverflow
 	// yay readability
 	for (var lx = 0, ly = 0;
 		el != null;
