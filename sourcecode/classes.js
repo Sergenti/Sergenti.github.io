@@ -55,6 +55,7 @@ class TileData {
 		this.vehicleMemory = vehicleMemory;
 
 		/* DEFINE TYPE DEPENDENT VARIABLES */
+		//loots defined in generateLootPool()
 		this.setTypeDependentVariables();
 	}
 	looseResource(multiplier = 1) {
@@ -93,59 +94,67 @@ class TileData {
 			switch (this.type) {
 				case 'forest':
 					lootPool = new LootPool(
-						new LootPoolItem('wood', f(6), f(11), 5),
-						new LootPoolItem('food', f(1), f(4), 2)
+						new LootPoolItem('wood', 6, 11, 5),
+						new LootPoolItem('food', 1, 4, 2)
 					);
 					break;
 				case 'factory':
 					/* (concrete+, metal++, electronics+, ammo) */
 					lootPool = new LootPool(
-						new LootPoolItem('metal', f(2), f(5), 3),
-						new LootPoolItem('concrete', f(3), f(6), 2),
-						new LootPoolItem('electronics', f(3), f(11), 2),
-						new LootPoolItem('ammo', f(1), f(3), 1),
-						new LootPoolItem('cloth', f(6), f(18), 2)
+						new LootPoolItem('metal', 2, 5, 3),
+						new LootPoolItem('concrete', 3, 6, 2),
+						new LootPoolItem('electronics', 3, 11, 2),
+						new LootPoolItem('ammo', 1, 3, 1),
+						new LootPoolItem('cloth', 6, 18, 2)
 					);
 					break;
 				case 'city_l':
 					/* (drugs++, ammo+, electronics++, food++) */
 					lootPool = new LootPool(
-						new LootPoolItem('electronics', f(3), f(15), 2),
-						new LootPoolItem('drugs', f(2), f(4), 2),
-						new LootPoolItem('food', f(9), f(20), 4),
-						new LootPoolItem('ammo', f(8), f(15), 3),
-						new LootPoolItem('metal', f(1), f(4), 1),
-						new LootPoolItem('cloth', f(4), f(14), 3)
+						new LootPoolItem('electronics', 3, 15, 2),
+						new LootPoolItem('drugs', 2, 4, 2),
+						new LootPoolItem('food', 9, 20, 4),
+						new LootPoolItem('ammo', 8, 15, 3),
+						new LootPoolItem('metal', 1, 4, 1),
+						new LootPoolItem('cloth', 4, 14, 3)
 					)
 					break;
 				case 'city_m':
 					/* (drugs+, ammo, electronics+, cloth+, food+) */
 					lootPool = new LootPool(
-						new LootPoolItem('drugs', f(1), f(3), 2),
-						new LootPoolItem('ammo', f(3), f(6), 1),
-						new LootPoolItem('electronics', f(2), f(9), 3),
-						new LootPoolItem('cloth', f(3), f(12), 2),
-						new LootPoolItem('food', f(4), f(8), 4)
+						new LootPoolItem('drugs', 1, 3, 2),
+						new LootPoolItem('ammo', 3, 6, 1),
+						new LootPoolItem('electronics', 2, 9, 3),
+						new LootPoolItem('cloth', 3, 12, 2),
+						new LootPoolItem('food', 4, 8, 4)
 					);
 					break;
 				case 'city_s':
 					lootPool = new LootPool(
-						new LootPoolItem('drugs', f(1), f(2), 2),
-						new LootPoolItem('ammo', f(4), f(8), 3),
-						new LootPoolItem('electronics', f(2), f(4), 1),
-						new LootPoolItem('cloth', f(3), f(10), 4),
-						new LootPoolItem('food', f(4), f(8), 3),
-						new LootPoolItem('concrete', f(5), f(8), 3),
-						new LootPoolItem('metal', f(1), f(3), 2),
+						new LootPoolItem('drugs', 2, 4, 2),
+						new LootPoolItem('ammo', 4, 8, 3),
+						new LootPoolItem('electronics', 5, 10, 1),
+						new LootPoolItem('cloth', 3, 10, 4),
+						new LootPoolItem('food', 6, 12, 3),
+						new LootPoolItem('concrete', 5, 8, 3),
+						new LootPoolItem('metal', 1, 3, 2)
 					);
 					break;
+				case 'gas_station':
+					lootPool = new LootPool(
+						new LootPoolItem('fuel', 6, 12, 10),
+						new LootPoolItem('metal', 5, 10, 3),
+						new LootPoolItem('food', 3, 9, 2),
+						new LootPoolItem('cloth', 3, 11, 2),
+						new LootPoolItem('drugs', 2, 5, 1)
+					)
 				case 'plain':
 					/* (wood-, ammo-, food [wild animals, wild plants]) */
 					lootPool = new LootPool(
-						new LootPoolItem('wood', f(2), f(4), 2),
-						new LootPoolItem('ammo', f(1), f(2), 1),
-						new LootPoolItem('food', f(1), f(4), 3),
-						new LootPoolItem('fuel', f(1), f(1), 1)
+						new LootPoolItem('wood', 2, 4, 2),
+						new LootPoolItem('ammo', 1, 2, 1),
+						new LootPoolItem('food', 1, 4, 3),
+						new LootPoolItem('fuel', 1, 1, 1)
 					);
 					break;
 
@@ -155,14 +164,14 @@ class TileData {
 
 			return lootPool;
 
-			function f(n) {//reduces loot output as resourceLevel goes down
+			/* function f(n) {//reduces loot output as resourceLevel goes down
 				let m = self.resourceLevel / 1000; // multiplier
 				let r = Math.round(n * m);
 				if (r <= 0) {
 					r = 1;
 				}
 				return r;
-			}
+			} */
 		}
 	}
 	setTypeDependentVariables() {
@@ -191,13 +200,15 @@ class TileData {
 				this.resourceDecay = 5;
 				this.lootDiversity = 5;
 				break;
+			case 'gas_station':
+				this.resourceDecay = 20
+				this.lootDiversity = 3;
+				break;
 			default:
 				this.resourceDecay = 0;
 		}
 	}
 	ct() { changeTile(this.id, editor.currentElemMap) }
-
-
 }
 
 class TileVehicleMemory {

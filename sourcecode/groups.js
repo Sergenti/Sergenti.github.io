@@ -371,7 +371,7 @@ class Party {
 		} else {
 			console.error(new Error('invalid target.'));
 		}
-		updateGroupInfo();
+		this.updateInfo();
 	}
 	contact(target) {
 		// compute the status of target
@@ -405,6 +405,7 @@ class Party {
 	updateInfo() {
 		document.getElementById('groupWindowTitle').innerHTML = `Group ${this.gn + 1}`;
 		document.getElementById('dAvPeople').innerHTML = camp.getAvailableWorkers();
+
 		/* display available time and inventory only if party is in mission */
 		let timeDiv = document.getElementById('partyTimeContainer');
 		if (this.inMission && timeDiv.classList.contains('hidden')) {
@@ -418,6 +419,7 @@ class Party {
 		} else if (!this.inMission && !inventory.classList.contains('hidden')) {
 			inventory.classList.add('hidden');
 		}
+
 		document.getElementById('groupTotalItems').innerHTML = this.inventory.getSum();
 		document.getElementById('groupMaxItems').innerHTML = this.vehicle.carry;
 		document.getElementById('dPartyMembers').innerHTML = this.people.getTotalMembers();
@@ -425,12 +427,12 @@ class Party {
 		if (max == undefined) { max = 15; }
 		document.getElementById('dPartyMaxMembers').innerHTML = max;
 		document.getElementById('dPartyTime').innerHTML = this.time;
+
 		/* update inventory values display */
-		Object.getOwnPropertyNames(this.inventory).forEach((name) => { document.getElementById('dGroup' + firstLetterToUpperCase(name)).innerHTML = this.inventory[name]; });
+		Object.getOwnPropertyNames(this.inventory).forEach((name) => document.getElementById('dGroup' + firstLetterToUpperCase(name)).innerHTML = this.inventory[name]);
 		if (this.inMission) {
 			this.updateOptions();
-			let tileId = `map${this.pos.x}_${this.pos.y}`;
-			moveElementOnTileMap(document.getElementById('partyIcon' + this.gn), tileId);
+			this.updateIcon();
 			document.getElementById('resourceInputs').classList.add('hidden');
 			document.getElementById('groupInventory').classList.remove('hidden');
 			if (this.time == 0) {
@@ -479,8 +481,6 @@ class Party {
 		this.resetOptions();
 		/* MOVE */
 		if (this.time > 0 && this.inventory.fuel > 0) {
-			let greenFilters = document.querySelector('.overlaytile-green');
-			/* const text = greenFilters == null ? 'move' : 'stop'; */
 			createGroupOption(gn, 'move', function () {
 				party.toggleMovementMap();
 			});
@@ -600,11 +600,16 @@ class Party {
 			}
 		}
 	}
+	updateIcon() {
+		let tileId = `map${this.pos.x}_${this.pos.y}`;
+		moveElementOnTileMap(document.getElementById('partyIcon' + this.gn), tileId);
+	}
 	resetOptions() {
 		let commands = document.getElementById('partyCommands');
 		commands.innerHTML = '';
 	}
 	openWindow(self) {
+		scrollToTile(self.pos.x, self.pos.y);
 		if (IGWindow.isHidden()) {
 			if (scavenging.movingParty == self.gn) {
 				removeMovementMap();

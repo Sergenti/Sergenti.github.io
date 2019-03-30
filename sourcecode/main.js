@@ -1,11 +1,12 @@
 /////////////////////////////GLOBAL VARIABLES////////////////////////////////////
+console.log('startup...')
 const tileSize = 64;// px
 const defaultsrc = 'img/default_tile.png';
 const partiesTimeLimit = 12; // hours per day
 const houseMaxPopIncrease = 5;
 const displayEndOfDayRecap = false;
 const displayEndOfDayEvents = false;
-const scavengeableTypes = ['plain', 'factory', 'city_s', 'city_m', 'city_l', 'forest'];
+const scavengeableTypes = ['plain', 'factory', 'city_s', 'city_m', 'city_l', 'forest', 'gas_station'];
 const zombieFightEfficiency = 1 / 30; // zombies / humans
 const version = 'alpha 0.5.1';
 
@@ -218,7 +219,7 @@ let TimerController = new EventTimerController();
 				IGWindow.hide();
 			}
 		}
-		if(player.currentPanel != 'default'){
+		if (player.currentPanel != 'default') {
 			changePanel('default');
 		}
 	});
@@ -241,6 +242,7 @@ let TimerController = new EventTimerController();
 	window.addEventListener('resize', windowResized);
 
 	/* load preferences (sound)*/
+	console.log('loading preferences...')
 	const preferences = fetchPreferences();
 	if (preferences) {
 		sounds.enabled = preferences.sound_enable;
@@ -254,9 +256,10 @@ let TimerController = new EventTimerController();
 		}
 	}
 	/* open maps and data from save if exist, otherwise, generate new game */
+	console.log('checking local save...');
 	let saved = true; // <- true to automatically load a saved game on launch
 	/* check if save data is in localStorage */
-	['mapJSON', 'playerDataJSON'].forEach((prop) => {
+	['mapJSON', 'playerDataJSON'].forEach(prop => {
 		if (!localStorage.hasOwnProperty(prop)) { saved = false }
 	})
 
@@ -265,21 +268,21 @@ let TimerController = new EventTimerController();
 		/* version check */
 		const tempPlayerData = JSON.parse(localStorage.getItem('playerDataJSON')).player;
 		if (tempPlayerData.version != version) {
-			console.log('corrupted or outdated savefile: ', tempPlayerData);
-			console.log('current version: ' + version);
+			console.log('outdated savefile version: ', tempPlayerData.version);
+			console.log('current game version: ' + version);
 			alert('The version of your savefile is outdated. We will generate a new game for you. Sorry.');
 			localStorage.clear();
 			await newGame();
 		} else {
 			openSavedGame();
 			document.getElementById('bDeleteSave').classList.remove('hidden');
-			console.log('game save detected');
 		}
 	}
 	/* create new game */
 	else {
 		await newGame();
 	}
+	console.log('loading display...');
 	/* setup error handlers and  + / - / send button listeners in inputs in group panel */
 	addGroupsWindowListeners();
 
@@ -305,10 +308,18 @@ let TimerController = new EventTimerController();
 		document.getElementById('playarea').style.left = document.getElementById('leftpanel').offsetWidth + 'px';
 		NPCs.updatePositionAll();
 		scrollToTile(player.campPos.x, player.campPos.y);
+		// display the icon of the parties that are in mission
+		scavenging.parties.forEach(p => {
+			if(p.inMission) {
+				p.updateIcon();
+			}
+		});
+		console.log('done ! version ' + version);
 	});
 })();
 ////////////////////////////////////LIBRARY//////////////////////////////////////
 async function newGame() {
+	console.log('generating new game...');
 	openMap(await fetchMapData());
 	//add NPC units
 	NPCs.addHordes(50);
@@ -633,6 +644,7 @@ function $$$people($ = 5) {
 //////////////////////////////////////DATA/////////////////////////////
 
 function openMap(data, origin) {
+	console.log('loading map...');
 	let mapContainer = document.getElementById('map');
 	//document.getElementById('map').innerHTML = '';
 	while (mapContainer.firstChild) {
@@ -687,6 +699,7 @@ function saveGame() {
 	console.log('game saved.');
 }
 function openSavedGame() {
+	console.log('loading saved game...');
 	let mapJSON = localStorage.getItem('mapJSON');
 	let playerData = JSON.parse(localStorage.getItem('playerDataJSON'));
 
@@ -764,17 +777,17 @@ function openSavedGame() {
 			party.setNotif('Ready to receive orders.', 'lightgreen');
 			//Display group icon
 			party.createIcon();
-			createGroupsVignettes();
-			party.updateInfo(); //also places the icon on the map
-			updateMetrics();
+
 		}
 	});
+	createGroupsVignettes();
+	scavenging.parties.forEach((party) => party.updateInfo() /*also places the icon on the map*/);
 
 	/* TIMERCONTROLLER */
 	Object.setPrototypeOf(TimerController, EventTimerController.prototype);
 	TimerController.timers.forEach((timer) => {
-		Object.setPrototypeOf(timer, Timer.prototype); 
-	})
+		Object.setPrototypeOf(timer, Timer.prototype);
+	});
 }
 function deleteSaveGame() {
 	localStorage.clear();
@@ -795,12 +808,12 @@ function fetchPreferences() {
 	return null;
 }
 
-function fetchMapData(){
+function fetchMapData() {
 	return fetch('./sourcecode/mapdata.json')
-	.then(result => {
+		.then(result => {
 			return result.json();
 		}).then((mapJSON) => {
 			return mapJSON.mapData;
 		})
-	
+
 }

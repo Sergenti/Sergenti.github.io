@@ -55,24 +55,25 @@ input[type=button], button{
     text-align: center; 
     vertical-align: middle;
     padding: 5px;
-    background-color: rgb(43, 42, 77);
-    border: 1px solid rgb(41, 41, 41);
+    background-color: rgb(96, 94, 170);
+		border: 1px solid rgb(41, 41, 41);
+		color: rgb(41, 41, 41);
     border-radius: 5px;
     cursor: pointer;
 }
 input[type=button]:disabled, button:disabled{
-    background-color: rgb(84, 76, 107);
+    background-color: rgb(163, 159, 177);
     border: 1px solid rgb(95, 95, 95);
     color: rgb(128, 128, 128);
     cursor: auto;
 }
 input[type=button]:hover:not(:disabled), button:hover:not(:disabled){
-    background-color: rgb(59, 74, 105);
+    background-color: rgb(97, 122, 170);
     border: 1px solid rgb(197, 197, 197);
     color: rgb(197, 197, 197);
 }
 button:disabled{
-    background-color: rgba(84, 76, 107, 0.5);
+    background-color: rgba(123, 112, 156, 0.5);
 }
 button{background-color: rgb(43, 42, 77, 0.5)}
 button:hover:not(:disabled){background-color: rgb(59, 74, 105, 0.5)}
