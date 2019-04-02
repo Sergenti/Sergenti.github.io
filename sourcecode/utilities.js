@@ -71,15 +71,38 @@ function scrollToTile(x, y, behavior = 'auto') {
 		/* jump to coordinate */
 		playarea.scrollTop = sy - screenHeight / 2;
 		playarea.scrollLeft = sx - screenWidth / 2 - document.getElementById('leftpanel').offsetWidth;
-	} else if (behavior = 'linear') {
+	} else if (behavior == 'linear') {
 		/* linear scrolling 
 		let duration = 500;//ms*/
 
 	} else if (behavior == 'smooth') {
-		/* TO DO: SMOOTH SCROLLING EASE_IN_OUT
-		let duration = 500;//ms
-		let dest = {x: sx - screenWidth / 2, y: sy - screenHeight / 2}; */
+		let duration = 30; // frames
+		const destPosPx = {
+			x: sx - screenWidth / 2 - document.getElementById('leftpanel').offsetWidth,
+			y: sy - screenHeight / 2,
+		}
+		const initialPosPx = {
+			x: playarea.scrollLeft,
+			y: playarea.scrollTop,
+		}
+		const interval = {
+			x: destPosPx.x - initialPosPx.x,
+			y: destPosPx.y - initialPosPx.y,
+		}
 
+		let t = 0;
+		window.requestAnimationFrame(moveFrame)
+		function moveFrame() {
+			const lambda = t / duration;
+			const m = EasingFunctions.easeInOutQuad(lambda);
+			playarea.scrollLeft = initialPosPx.x + (m * interval.x);
+			playarea.scrollTop = initialPosPx.y + (m * interval.y);
+
+			if (t <= duration) {
+				t++;
+				window.requestAnimationFrame(moveFrame)
+			}
+		}
 	} else {
 		console.log(`scrollToTile: behavior '${behavior}' is not recognized.`);
 	}
@@ -95,7 +118,6 @@ function getNameFromIdMap(id) {
 	let destName = map.layoutTiles[typeIndex].type;//Ultimately, to be replace with the name of the tile, if it should have one.
 	return destName;
 }
-
 function getAdjacentTilesMap(id) {
 	let adjacentTiles = [];
 	let tilePos = getTileXYFromId(id);
@@ -110,7 +132,6 @@ function getAdjacentTilesMap(id) {
 	}
 	return adjacentTiles;
 }
-
 function getDirectAdjacentTilesMap(id) {//Only the tiles that are directly adjacent to the tile. -> doesn't count the corners
 	//RETURNS OUT OF BOUNDS TILES AS UNDEFINED
 	let adjacentTiles = [];
@@ -131,7 +152,6 @@ function getDirectAdjacentTilesMap(id) {//Only the tiles that are directly adjac
 	}
 	return adjacentTiles;
 }
-
 function hasAdjacentTypeMap(id, type) {
 	let adjW = false;
 	let adjTiles = getDirectAdjacentTilesMap(id);
@@ -143,14 +163,43 @@ function hasAdjacentTypeMap(id, type) {
 	}
 	return adjW;
 }
-
 function moveElementOnTileMap(el, id) {//el: element to move, id: id of destination tile
 	let pos = getPos(document.getElementById(id));
 	//console.log({moveElementOnTileMap: pos});
 	el.style.left = pos.x - document.getElementById('leftpanel').offsetWidth + 'px';//Correction because of the left panel
 	el.style.top = pos.y + 'px';
 }
+function moveElementOnTileMapSmooth(el, id) {
+	let pos = getPos(document.getElementById(id));
 
+	let duration = 40; // frames
+	const destPosPx = {
+		x: pos.x - document.getElementById('leftpanel').offsetWidth,
+		y: pos.y,
+	}
+	const initialPosPx = {
+		x: getPos(el).x - document.getElementById('leftpanel').offsetWidth,
+		y: getPos(el).y,
+	}
+	const interval = {
+		x: destPosPx.x - initialPosPx.x,
+		y: destPosPx.y - initialPosPx.y,
+	}
+
+	let t = 0;
+	window.requestAnimationFrame(moveFrame)
+	function moveFrame() {
+		const lambda = t / duration;
+		const m = EasingFunctions.easeInOutQuad(lambda);
+		el.style.left = initialPosPx.x + (m * interval.x) + 'px';//Correction because of the left panel
+		el.style.top = initialPosPx.y + (m * interval.y) + 'px';
+
+		if (t <= duration) {
+			t++;
+			window.requestAnimationFrame(moveFrame)
+		}
+	}
+}
 function generateList(...list) {//List: array of strings
 	let str = '';
 	list.forEach(function (el, i, arr) {
@@ -164,7 +213,6 @@ function generateList(...list) {//List: array of strings
 	});
 	return str;
 }
-
 function generateResourceChangeList(loot) {
 	let str = '(';
 	loot.items.forEach((item, i, arr) => {
@@ -177,7 +225,6 @@ function generateResourceChangeList(loot) {
 	});
 	return str;
 }
-
 function createButton(value, targetParent, handler, disabled = false) {
 	let o = document.createElement('input');
 	o.setAttribute('type', 'button');
@@ -188,7 +235,6 @@ function createButton(value, targetParent, handler, disabled = false) {
 	o.disabled = disabled;
 	targetParent.appendChild(o);
 }
-
 function addSign(number) {
 	let v;
 	if (number >= 0) {
@@ -198,7 +244,6 @@ function addSign(number) {
 	}
 	return v;
 }
-
 function onReady(callback) {
 	/* from https://stackoverflow.com/questions/25253391/javascript-loading-screen-while-page-loads modified*/
 	var intervalId = window.setInterval(function () {
@@ -208,8 +253,7 @@ function onReady(callback) {
 		}
 	}, 500);//refresh rate
 }
-
-function selectRandomFromArray(array){
+function selectRandomFromArray(array) {
 	let i = rand(0, array.length - 1);
 	return array[i];
 }

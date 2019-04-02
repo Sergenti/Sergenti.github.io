@@ -39,7 +39,7 @@ class Party {
 			}
 		}
 		this.updateMovementMap();
-		moveElementOnTileMap(document.getElementById(g('partyIcon', this.gn)), `map${x}_${y}`);
+		moveElementOnTileMapSmooth(document.getElementById(g('partyIcon', this.gn)), `map${x}_${y}`);
 		this.updateInfo();
 		this.updateOptions();
 	}
@@ -609,7 +609,7 @@ class Party {
 		commands.innerHTML = '';
 	}
 	openWindow(self) {
-		scrollToTile(self.pos.x, self.pos.y);
+		scrollToTile(self.pos.x, self.pos.y, 'smooth');
 		if (IGWindow.isHidden()) {
 			if (scavenging.movingParty == self.gn) {
 				removeMovementMap();
@@ -774,7 +774,7 @@ function groupButtonSendClick() {
 	let party = scavenging.parties[scavenging.selectedParty];
 	party.send();
 	party.updateInfo();
-	scrollToTile(camp.pos.x, camp.pos.y);
+	scrollToTile(camp.pos.x, camp.pos.y, 'smooth');
 }
 function createGroupOption(groupNumber, value, handler) {
 	let commandsDiv = document.getElementById('partyCommands');

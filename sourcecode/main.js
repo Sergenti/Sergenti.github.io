@@ -303,11 +303,13 @@ let TimerController = new EventTimerController();
 		//Hide loading screen
 		document.getElementById('loadScr').classList.add('hidden');
 		document.getElementById('game').classList.remove('hidden');
+
 		//Set initial scroll position and set the size of playarea according to window dimensions
 		windowResized();//<- need to do that when the panels are visible, otherwise offsetWidth = 0 !
 		document.getElementById('playarea').style.left = document.getElementById('leftpanel').offsetWidth + 'px';
 		NPCs.updatePositionAll();
 		scrollToTile(player.campPos.x, player.campPos.y);
+
 		// display the icon of the parties that are in mission
 		scavenging.parties.forEach(p => {
 			if(p.inMission) {
@@ -321,6 +323,7 @@ let TimerController = new EventTimerController();
 async function newGame() {
 	console.log('generating new game...');
 	openMap(await fetchMapData());
+	
 	//add NPC units
 	NPCs.addHordes(50);
 	NPCs.addSurvivors(150);
