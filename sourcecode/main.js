@@ -8,6 +8,7 @@ const displayEndOfDayRecap = false;
 const displayEndOfDayEvents = false;
 const scavengeableTypes = ['plain', 'factory', 'city_s', 'city_m', 'city_l', 'forest', 'gas_station'];
 const zombieFightEfficiency = 1 / 30; // zombies / humans
+const animationFramesPerTile = 15;
 const version = 'alpha 0.5.1';
 
 let player = new Player();
@@ -312,7 +313,7 @@ let TimerController = new EventTimerController();
 
 		// display the icon of the parties that are in mission
 		scavenging.parties.forEach(p => {
-			if(p.inMission) {
+			if (p.inMission) {
 				p.updateIcon();
 			}
 		});
@@ -323,7 +324,7 @@ let TimerController = new EventTimerController();
 async function newGame() {
 	console.log('generating new game...');
 	openMap(await fetchMapData());
-	
+
 	//add NPC units
 	NPCs.addHordes(50);
 	NPCs.addSurvivors(150);
@@ -625,6 +626,39 @@ function changePanel(name) {//name of the panel we want to show
 		openPanel(name);
 	}
 }
+function tilePosIsVisibleOnScreen(pos){
+	const playarea = document.getElementById('playarea');
+	// get coordinates of the camera
+	const camera = {
+		start: {
+			x: playarea.scrollLeft,
+			y: playarea.scrollTop,
+		},
+		end: {
+			x: playarea.scrollLeft + playarea.offsetWidth,
+			y: playarea.scrollTop + playarea.offsetHeight,
+		}
+	}
+	// get coodinates of this NPC
+	const npcc = {
+		start: {
+			x: pos.x * tileSize,
+			y: pos.y * tileSize,
+		},
+		end: {
+			x: pos.x * tileSize + tileSize,
+			y: pos.y * tileSize + tileSize,
+		}
+	}
+
+	const isInsideCameraVertically = (npcc.end.y > camera.start.y) && (npcc.start.y < camera.end.y);
+	const isInsideCameraHorizontally = (npcc.end.x > camera.start.x) && (npcc.start.x < camera.end.x)
+
+	return (isInsideCameraHorizontally && isInsideCameraVertically);
+}
+
+
+
 //End update display
 function closeRecapMenu() {
 	document.getElementById('menuRecap').classList.add('hidden');

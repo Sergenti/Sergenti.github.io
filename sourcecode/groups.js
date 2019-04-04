@@ -13,8 +13,8 @@ class Party {
 		this.icon;
 	}
 	move(x, y) {
-		let distance = manhattanDistance(this.pos.x, this.pos.y, x, y);
-		let timeCost = Math.floor(distance / this.vehicle.speed);
+		const distance = manhattanDistance(this.pos.x, this.pos.y, x, y);
+		const timeCost = Math.floor(distance / this.vehicle.speed);
 		this.pos = { x: x, y: y };
 		this.time -= timeCost;
 		this.vehicle.moveCounter += distance;
@@ -25,7 +25,7 @@ class Party {
 			let distanceToCamp = manhattanDistance(this.pos.x, this.pos.y, player.campPos.x, player.campPos.y);
 			let lowFuelMark = this.vehicle.fuelLoss * (distanceToCamp + 10) / this.vehicle.unitsPerFuelLoss;
 			let noReturnMark = this.vehicle.fuelLoss * distanceToCamp / this.vehicle.unitsPerFuelLoss;
-			let fuelDisplay = document.getElementById(g('dGroupFuel', this.gn));
+			let fuelDisplay = document.getElementById(g('dGroupFuel'));
 			if (this.inventory.fuel <= 0) {/* NO MORE FUEL */
 				this.inventory.fuel = 0;
 				this.setNotif(`You have no fuel left.`, 'red');
@@ -39,7 +39,8 @@ class Party {
 			}
 		}
 		this.updateMovementMap();
-		moveElementOnTileMapSmooth(document.getElementById(g('partyIcon', this.gn)), `map${x}_${y}`);
+		const duration = distance * animationFramesPerTile; // frames
+		moveElementOnTileMapSmooth(document.getElementById(g('partyIcon', this.gn)), `map${x}_${y}`, duration);
 		this.updateInfo();
 		this.updateOptions();
 	}
@@ -609,7 +610,6 @@ class Party {
 		commands.innerHTML = '';
 	}
 	openWindow(self) {
-		scrollToTile(self.pos.x, self.pos.y, 'smooth');
 		if (IGWindow.isHidden()) {
 			if (scavenging.movingParty == self.gn) {
 				removeMovementMap();
@@ -695,7 +695,10 @@ function createGroupsVignettes() {
 		let container = document.getElementById('groupsVignetteContainer');
 		let vignette = document.createElement('button');
 		vignette.setAttribute('class', 'groupVignette hidden');
-		vignette.addEventListener('click', () => party.openWindow(party))
+		vignette.addEventListener('click', () => {
+			scrollToTile(party.pos.x, party.pos.y, 'smooth');
+			party.openWindow(party)
+		})
 
 		let title = document.createElement('span');
 		title.innerHTML = `Group ${gn + 1}`;

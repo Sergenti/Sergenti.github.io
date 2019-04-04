@@ -31,13 +31,30 @@ class NPC {
 
 	}
 	move(x, y) {
-		this.x = x;
-		this.y = y;
+		// if this NPC is or will be visible on screen
+		const isOrWillBeVisibleOnScreen = tilePosIsVisibleOnScreen({ x: x, y: y }) || tilePosIsVisibleOnScreen({ x: this.x, y: this.y });
+		// move the icon to the new position
 		if (this.icon != null) {
-			moveElementOnTileMap(this.icon, `map${x}_${y}`);
+			// if the unit will be seen by the player before or after the movement, animate
+			if (isOrWillBeVisibleOnScreen) {
+				// we change the duration of the animation to be linear to the distance walked
+				// (the further the destination, the more time they need to get there);
+				const distance = manhattanDistance(this.x, this.y, x, y);
+				const duration = distance * animationFramesPerTile;
+				moveElementOnTileMapSmooth(this.icon, `map${x}_${y}`, duration)
+			}
+			// otherwise, do not animate
+			else {
+				moveElementOnTileMap(this.icon, `map${x}_${y}`);
+			}
+			// assign new coordinates
+			this.x = x;
+			this.y = y;
+			
 		} else {
 			console.error(new Error('icon is null.'));
 		}
+
 
 	}
 	createIcon() {
@@ -52,7 +69,7 @@ class NPC {
 		this.move(this.x, this.y);
 	}
 	blink(color, duration) {
-		if(this.icon != undefined){
+		if (this.icon != undefined) {
 			this.icon.style.backgroundColor = color;
 			setTimeout(() => {
 				if (this.icon != undefined) {
@@ -115,9 +132,7 @@ class NPC {
 			if (map.layout[newY][newX].type == 'water' || map.layout[Math.round((this.y + newY) / 2)][Math.round((this.x + newX) / 2)].type == 'water') {
 				this.moveRandom();
 			} else {
-				this.x = newX;
-				this.y = newY;
-				this.move(this.x, this.y);
+				this.move(newX, newY);
 			}
 		} else {
 			this.moveRandom();
@@ -311,9 +326,9 @@ class Survivor {
 			statusStr = { str: status, color: 'green' };
 		} else if (this.status == 'neutral') {
 			statusStr = { str: status, color: 'grey' };
-		} else if (this.status == 'hostile'){
+		} else if (this.status == 'hostile') {
 			statusStr = { str: status, color: 'red' };
-		} else if (this.status == 'unknown'){
+		} else if (this.status == 'unknown') {
 			statusStr = { str: status, color: 'white' };
 		}
 		return statusStr;
@@ -364,7 +379,7 @@ class NPCCamp {
 			return unit;
 		}
 
-		
+
 
 		function selectSpawnTile() {
 			const adjTiles = getAdjacentTilesMap(`map${position.x}_${position.y}`);
@@ -667,9 +682,9 @@ class NPCController {
 
 				} else if (unit.data.type == 'settlement') {
 					unit.data.members += 1;
-					if(unit.data.members > 50 && rand(0, 100) > 75){
-						let survivorProduced = unit.data.produceSurvivor({x: unit.x, y: unit.y});
-						if(survivorProduced){
+					if (unit.data.members > 50 && rand(0, 100) > 75) {
+						let survivorProduced = unit.data.produceSurvivor({ x: unit.x, y: unit.y });
+						if (survivorProduced) {
 							unit.data.members -= survivorProduced.data.members;
 						}
 					}

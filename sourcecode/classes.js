@@ -469,7 +469,7 @@ class IGWindowController {
 		openPanel(windowName);
 
 		function openPanel(name) {
-			self.windows[name].classList.remove('hidden')
+			self.windows[name].classList.remove('hidden');
 		}
 		function closePanel(name) {
 			self.windows[name].classList.add('hidden');

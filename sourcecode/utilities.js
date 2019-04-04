@@ -169,10 +169,8 @@ function moveElementOnTileMap(el, id) {//el: element to move, id: id of destinat
 	el.style.left = pos.x - document.getElementById('leftpanel').offsetWidth + 'px';//Correction because of the left panel
 	el.style.top = pos.y + 'px';
 }
-function moveElementOnTileMapSmooth(el, id) {
+function moveElementOnTileMapSmooth(el, id, duration = 40) {
 	let pos = getPos(document.getElementById(id));
-
-	let duration = 40; // frames
 	const destPosPx = {
 		x: pos.x - document.getElementById('leftpanel').offsetWidth,
 		y: pos.y,
