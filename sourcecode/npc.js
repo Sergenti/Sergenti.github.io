@@ -50,7 +50,7 @@ class NPC {
 			// assign new coordinates
 			this.x = x;
 			this.y = y;
-			
+
 		} else {
 			console.error(new Error('icon is null.'));
 		}
@@ -73,11 +73,7 @@ class NPC {
 			this.icon.style.backgroundColor = color;
 			setTimeout(() => {
 				if (this.icon != undefined) {
-					if (NPCs.currentSelected != undefined) {
-						this.icon.style.backgroundColor = NPCs.currentSelected.id == this.id ? 'rgba(255, 255, 0, 0.329)' : this.originalColor;
-					} else {
-						this.icon.style.backgroundColor = this.originalColor;
-					}
+					this.icon.style.backgroundColor = this.originalColor;
 				}
 			}, duration);
 		}
@@ -91,15 +87,12 @@ class NPC {
 				/* party moving -> display interaction options */
 				self.displayInteractionInfos();
 				party.createNPCInteractionOptions(self);
-				changePanel('NPCInteraction');
+				IGWindow.changeWindow('NPCInteraction');
+				IGWindow.show();
 			}
 		} else {
 			self.displayOnPanel();
 		}
-		/* DEBUG */
-		if (NPCs.currentSelected != undefined) NPCs.currentSelected.icon.style.backgroundColor = NPCs.currentSelected.originalColor;
-		self.icon.style.backgroundColor = 'rgba(255, 255, 0, 0.329)';
-		NPCs.currentSelected = self;
 	}
 	setIconListener() {
 		let icon = document.getElementById(this.id);
@@ -196,7 +189,6 @@ class NPC {
 		} else {
 			console.error(new Error('unexpected data type.'));
 		}
-		changePanel('NPCInteraction');
 	}
 	settle() {
 		if (this.data.type != 'survivor') {
@@ -253,8 +245,8 @@ class Survivor {
 		this.members = randNormal(3, 15);
 		this.iconsrc = 'img/npc/survivoricon.png';
 		this.status = 'unknown';
-		this.trust = randNormal(0, 100, 35);
-		this.aggro = randNormal(0, 100, 65);
+		this.trust = randNormal(0, 100, 35, 4);
+		this.aggro = randNormal(0, 100, 65, 4);
 		this.equipment = randNormal(0, 70, 30);
 		this.tradeCounter = 0;
 		this.fightCounter = 0;
@@ -264,6 +256,8 @@ class Survivor {
 			size: false,
 			equipment: false,
 			type: false,
+			contacted: false,
+			friendly: false,
 		}
 	}
 	getTendency() {
@@ -337,7 +331,7 @@ class Survivor {
 		let inventory = new Inventory();
 
 		// generate randomized values for each resource
-		inventory.forAll((res) => inventory[res] = Math.round(this.equipment));
+		inventory.forAll((res) => inventory[res] = Math.round(Math.random() * Math.round(this.equipment)));
 		// ...later
 
 		return inventory;
@@ -661,14 +655,19 @@ class NPCController {
 					/* if the tile is scavengeable */
 					if (scavengeableTypes.includes(td.type) && td.resourceLevel > 0) {
 						let randTry = rand(0, 100);
-						if (randTry > 30) {
+						if (randTry > 80) {
 							let m = randNormal(1, 5, undefined, 8)
 							td.looseResource(m);
 							unit.data.equipment += m;
+							//limit max equipment to 100
+							unit.data.equipment = unit.data.equipment > 100 ? 100 : unit.data.equipment;
 
 							unit.blink('yellow', 100);
 						}
 					}
+					unit.data.equipment -= 0.5;
+					// limit min equipemnt to 0
+					unit.data.equipment = unit.data.equipment < 0 ? 0 : unit.data.equipment;
 
 					if (['forest', 'plain'].includes(td.type) && manhattanDistance(unit.x, unit.y, camp.pos.x, camp.pos.y) > 5) {
 						/* temp to be replaced with hapiness function or whatever */
@@ -729,12 +728,11 @@ class NPCController {
 		for (let i = 0; i < days; i++) {
 			this.moveRandomAll();
 			this.collisions();
-			if (this.currentSelected != undefined) this.currentSelected.displayOnPanel();
 		}
 	}
 	combat(unit1, unit2) {
-		unit1.fightCounter++;
-		unit2.fightCounter++;
+		unit1.data.fightCounter++;
+		unit2.data.fightCounter++;
 		this.addLogEntry('battle:', unit1, 'vs.', unit2);
 
 		let losses1 = rand(0, unit2.data.members);

@@ -221,7 +221,7 @@ function generateResourceChangeList(loot) {
 			str += ')'
 		}
 	});
-	return str;
+	return '<span class="lootlist">'+str+'</span>';
 }
 function createButton(value, targetParent, handler, disabled = false) {
 	let o = document.createElement('input');

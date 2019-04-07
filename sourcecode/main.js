@@ -5,11 +5,11 @@ const defaultsrc = 'img/default_tile.png';
 const partiesTimeLimit = 12; // hours per day
 const houseMaxPopIncrease = 5;
 const displayEndOfDayRecap = false;
-const displayEndOfDayEvents = false;
+const displayEndOfDayEvents = true;
 const scavengeableTypes = ['plain', 'factory', 'city_s', 'city_m', 'city_l', 'forest', 'gas_station'];
 const zombieFightEfficiency = 1 / 30; // zombies / humans
 const animationFramesPerTile = 15;
-const version = 'alpha 0.5.1';
+const version = 'alpha 0.5.2';
 
 let player = new Player();
 let build = new BuildController();
@@ -257,7 +257,7 @@ let TimerController = new EventTimerController();
 		}
 	}
 	/* open maps and data from save if exist, otherwise, generate new game */
-	console.log('checking local save...');
+	console.log('checking for local save...');
 	let saved = true; // <- true to automatically load a saved game on launch
 	/* check if save data is in localStorage */
 	['mapJSON', 'playerDataJSON'].forEach(prop => {
@@ -481,11 +481,6 @@ function clickOnMapTile(tile) {
 			IGWindow.show();
 		}
 	}
-	/* DEBUG */
-	if (NPCs.currentSelected != undefined) {
-		NPCs.currentSelected.icon.style.backgroundColor = NPCs.currentSelected.originalColor;
-		NPCs.currentSelected = undefined;
-	}
 
 	document.getElementById('debugData').innerHTML = `<span style='font-weight: bolder; color: red;'>MAP DEBUG</span><br>
     id: ${tileData.id}<br>
@@ -532,16 +527,17 @@ function toggleGroupsPanel() {
 	let scPanel = document.getElementById('groupsPanel');
 	if (scPanel.classList.contains('hidden')) {
 		changePanel('groups');
+		document.getElementById('bGroups').value = 'Settlement';
 		updateGroupsVignettes();
 	} else {
 		changePanel();
+		document.getElementById('bGroups').value = 'Groups';
 	}
 }
 function changePanel(name) {//name of the panel we want to show
 	let scPanel = document.getElementById('groupsPanel'),
 		NPCPanel = document.getElementById('NPCPanel'),
 		defaultPanel = document.getElementById('defaultPanel'),
-		NPCInteractionPanel = document.getElementById('NPCInteractionPanel'),
 		panelTitle = document.getElementById('panelTitle');
 	if (name == undefined) {
 		player.currentPanel = 'default';
@@ -557,9 +553,6 @@ function changePanel(name) {//name of the panel we want to show
 			break;
 		case 'NPC':
 			panelTitle.innerHTML = 'NPC INSPECTOR';
-			break;
-		case 'NPCInteraction':
-			panelTitle.innerHTML = 'NPC INTERACTION';
 			break;
 		case 'default':
 		default: /* settlement */
@@ -577,11 +570,6 @@ function changePanel(name) {//name of the panel we want to show
 			case 'NPC':
 				if (NPCPanel.classList.contains('hidden')) {
 					NPCPanel.classList.remove('hidden');
-				}
-				break;
-			case 'NPCInteraction':
-				if (NPCInteractionPanel.classList.contains('hidden')) {
-					NPCInteractionPanel.classList.remove('hidden');
 				}
 				break;
 			case 'default':
@@ -605,11 +593,6 @@ function changePanel(name) {//name of the panel we want to show
 						NPCPanel.classList.add('hidden');
 					}
 					break;
-				case 'NPCInteraction':
-					if (!NPCInteractionPanel.classList.contains('hidden')) {
-						NPCInteractionPanel.classList.add('hidden');
-					}
-					break;
 				case 'default':
 				default: /* settlement */
 					if (!defaultPanel.classList.contains('hidden')) {
@@ -620,7 +603,7 @@ function changePanel(name) {//name of the panel we want to show
 	}
 
 	function closeOtherThan(name = 'default') {
-		let names = ['NPC', 'NPCInteraction', 'groups', 'default'];
+		let names = ['NPC', 'groups', 'default'];
 		names = names.filter((n) => n != name);
 		closePanel.apply(this, names);
 		openPanel(name);
@@ -656,8 +639,6 @@ function tilePosIsVisibleOnScreen(pos){
 
 	return (isInsideCameraHorizontally && isInsideCameraVertically);
 }
-
-
 
 //End update display
 function closeRecapMenu() {
@@ -723,7 +704,6 @@ function saveGame() {
 		camp: camp,
 		parties: scavenging.parties,
 		NPC: NPCs,
-		TimerController: TimerController,
 	}
 	let mapJSON = editor.stringify();
 	let playerDataJSON = JSON.stringify(playerData);
@@ -746,7 +726,6 @@ function openSavedGame() {
 	scavenging.parties = playerData.parties;
 	NPCs = playerData.NPC;
 	camp = playerData.camp;
-	TimerController = playerData.TimerController;
 
 	/* PLAYER */
 	Object.setPrototypeOf(player, Player.prototype);
@@ -798,6 +777,9 @@ function openSavedGame() {
 		Object.setPrototypeOf(party.people, PeopleGroup.prototype);
 
 		party.people.members.forEach((per) => Object.setPrototypeOf(per, Person.prototype));
+		if(!party.sendable){
+			party.sendable = true;
+		}
 		/* changing display for parties that are in mission
 			 create a party icon */
 		if (party.inMission) {
@@ -819,12 +801,6 @@ function openSavedGame() {
 	});
 	createGroupsVignettes();
 	scavenging.parties.forEach((party) => party.updateInfo() /*also places the icon on the map*/);
-
-	/* TIMERCONTROLLER */
-	Object.setPrototypeOf(TimerController, EventTimerController.prototype);
-	TimerController.timers.forEach((timer) => {
-		Object.setPrototypeOf(timer, Timer.prototype);
-	});
 }
 function deleteSaveGame() {
 	localStorage.clear();

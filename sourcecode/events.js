@@ -1,3 +1,6 @@
+// timers are not saved with the game, every timer is lost on reload,
+// due to inability to store functions in localStorage JSON format.
+// may be working on a way to overcome that, but not sure.
 class EventTimerController {
 	constructor() {
 		this.timers = [];
@@ -29,7 +32,11 @@ class Timer {
 	progress() {
 		this.delayCounter -= 1;
 		if (this.delayCounter <= 0) {
-			this.callback();
+			if(this.callback){
+				this.callback();
+			} else {
+				console.log('timer callback lost :(');
+			}
 			TimerController.removeTimer(this.id);
 		}
 	}

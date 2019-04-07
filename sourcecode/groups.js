@@ -22,21 +22,6 @@ class Party {
 		if (this.vehicle.moveCounter == this.vehicle.unitsPerFuelLoss) {
 			this.inventory.fuel -= this.vehicle.fuelLoss;
 			this.vehicle.moveCounter = 0;
-			let distanceToCamp = manhattanDistance(this.pos.x, this.pos.y, player.campPos.x, player.campPos.y);
-			let lowFuelMark = this.vehicle.fuelLoss * (distanceToCamp + 10) / this.vehicle.unitsPerFuelLoss;
-			let noReturnMark = this.vehicle.fuelLoss * distanceToCamp / this.vehicle.unitsPerFuelLoss;
-			let fuelDisplay = document.getElementById(g('dGroupFuel'));
-			if (this.inventory.fuel <= 0) {/* NO MORE FUEL */
-				this.inventory.fuel = 0;
-				this.setNotif(`You have no fuel left.`, 'red');
-				fuelDisplay.style.color = 'red';
-			} else if (this.inventory.fuel < noReturnMark) {/* NOT ENOUGH FUEL TO GO BACK TO CAMP */
-				this.setNotif(`You don't have enough fuel to come back !`, 'orange');
-				fuelDisplay.style.color = 'orange';
-			} else if (this.inventory.fuel <= lowFuelMark) {/* LOW FUEL */
-				this.setNotif(`You barely have enough fuel to come back !`, 'yellow');
-				fuelDisplay.style.color = 'yellow';
-			}
 		}
 		this.updateMovementMap();
 		const duration = distance * animationFramesPerTile; // frames
@@ -158,13 +143,15 @@ class Party {
 			if (party.time >= 2 && NPC.data.status == 'unknown') {
 				createOption('Contact', () => contact(NPC));
 			}
+			if (NPC.data.playerDiscovered.contacted == true) {
+				createOption('Trade', () => trade(NPC));
+			}
 			if (party.time >= 3) {
 				createOption('Gather info (3h)', () => gatherInfo(NPC));
 			}
 		} else {
 			console.error(new Error('invalid data type.'));
 		}
-		changePanel('NPCInteraction');
 		this.updateNPCInteraction(NPC);
 
 		function gatherInfo(NPC) {
@@ -189,6 +176,13 @@ class Party {
 			} else {
 				party.time -= 3;
 				party.contact(NPC);
+			}
+		}
+		function trade(NPC) {
+			if (getDistance(party.pos.x, party.pos.y, NPC.x, NPC.y) > 1) {
+				party.setNPCNotif('We need to get closer fist.', 'orange');
+			} else {
+				party.trade(NPC);
 			}
 		}
 
@@ -226,7 +220,7 @@ class Party {
 							dSize.style.color = 'white';
 						} else {
 							let estimate = NPC.data.playerDiscovered.sizeEstimate;
-							dSize.innerHTML = `${estimate[0]} - ${estimate[1]} members`;
+							dSize.innerHTML = `${Math.round(estimate[0])} - ${Math.round(estimate[1])} members`;
 						}
 					} else if (n == 'equipment') {
 						if (!NPC.data.playerDiscovered.equipment) {
@@ -268,64 +262,72 @@ class Party {
 			else if (target.data instanceof Survivor) {
 				/* move to enemy position */
 				this.pos = { x: target.x, y: target.y };
-				moveElementOnTileMap(document.getElementById(g('partyIcon', this.gn)), `map${target.x}_${target.y}`);
+				moveElementOnTileMapSmooth(document.getElementById(g('partyIcon', this.gn)), `map${target.x}_${target.y}`);
 				this.updateMovementMap();
+
+				// move enemy randomly by one tile
 				target.move(Math.sign(rand(-50, 50)) + target.x, Math.sign(rand(-50, 50)) + target.y);
 
 				/* Ammo calculation */
-				let ammoLoss = rand(target.data.members, target.data.members * 5);
-				if (ammoLoss >= this.inventory.ammo) {
-					this.inventory.ammo = 0;
+				let ammoLoss = Math.round(rand(target.data.members, target.data.members * 5));
+				this.inventory.addResource('ammo', -ammoLoss);
+
+				// calculate losses
+				let losses = randNormal(0, this.members, 1);
+				let enemyLosses = rand(1, target.data.members);
+
+				// apply losses
+				const membersKilled = this.people.woundQty(losses);
+				target.data.members -= enemyLosses;
+
+				let kaputtNPC = false
+				if (target.data.members <= 0) {
+					kaputtNPC = true;
+				}
+				// initialize loot pool
+				let lp = new LootPool(
+					new LootPoolItem('fuel', 1, 2, 7),
+					new LootPoolItem('ammo', 5, 8, 3),
+					new LootPoolItem('cloth', 3, 8, 4),
+					new LootPoolItem('metal', 2, 3, 1),
+					new LootPoolItem('food', 3, 12, 5),
+					new LootPoolItem('wood', 4, 7, 3),
+					new LootPoolItem('drugs', 2, 3, 4)
+				);
+				// randomize loot and apply
+				let loot = lp.randomizeLoot(2, 4);
+				loot.applyMultiplier(enemyLosses);
+				loot.addToInv(this.inventory);
+				// notify player
+				const woundedStr = losses.wound > 0 ? `${losses.wound} were wounded` : '';
+				const deathsStr = losses.deaths > 0 ? `${losses.deaths} were killed` : '';
+				let lossesNotif = 'On our side, ';
+				if(xor(woundedStr == '', deathsStr == '')){
+					if(woundedStr != ''){
+						lossesNotif += woundedStr + '.';
+					} else {
+						lossesNotif += deathsStr + '.';
+					}
+				} else if (woundedStr == '' && deathsStr == ''){
+					lossesNotif += 'everyone is okay.';
 				} else {
-					this.inventory.ammo -= ammoLoss;
+					lossesNotif += deathsStr + ' and ' + woundedStr + '.';
 				}
-
-				/* outcome calculation */
-				let difficulty = (target.data.members * target.data.equipment) / this.people.getTotalMembers() * 100;
-				let outcome = rand(0, 100) + difficulty;
-
-				/* Get rekt */
-				if (outcome > 75) {
-					let losses = rand(1, this.members);
-					console.log()
-					let enemyLosses = rand(1, target.members / 2);
-					this.setNPCNotif(losses + ' members of the group died in the assault. We killed ' + enemyLosses + ' of them.', 'red');
-
-					this.members -= losses;
-					target.members -= enemyLosses;
-
-					target.blink('red', 200);
-				}
-				/* Kill em all */
-				else if (outcome > 40) {
-					let lp = new LootPool(
-						new LootPoolItem('fuel', 1, 2, 2),
-						new LootPoolItem('ammo', 2, 6, 3),
-						new LootPoolItem('metal', 2, 3, 1),
-						new LootPoolItem('food', 3, 12, 5),
-						new LootPoolItem('wood', 4, 7, 3)
-					);
-
-					let loot = lp.randomizeLoot(2, 4);
-					loot.applyMultiplier(target.members);
-					loot.addToInv(this.inventory);
-					this.setNPCNotif('The group was able to kill all enemies. ' + generateResourceChangeList(loot));
-
+				const qtyKilledNotif = kaputtNPC ? 'all' : Math.round(enemyLosses);
+				this.setNPCNotif('The group was able to kill ' + qtyKilledNotif + ' enemies. ' + lossesNotif + ' ' + generateResourceChangeList(loot));
+				// kill
+				if (kaputtNPC) {
 					target.remove();
 				}
-				/* capture some */
-				else {
-					this.setNPCNotif('The group was able to capture some of the enemies.')
-
-				}
-				this.createNPCInteractionOptions(target);
 			} else {
 				console.error(new Error('invalid target data type.'));
 			}
 		} else {
 			console.error(new Error('invalid target.'));
 		}
-		updateGroupInfo();
+		this.updateInfo();
+		this.updateNPCInteraction(target);
+		this.createNPCInteractionOptions(target);
 	}
 	gatherInfo(target) {
 		if (target instanceof NPC) {
@@ -338,7 +340,7 @@ class Party {
 				this.setNPCNotif('The group came back with information.');
 			} else if (target.data instanceof Survivor) {
 				let pool = ['size', 'equipment', 'type'];
-				pool = pool.filter((el) => !target.data.playerDiscovered[el]);//remove already discovered elements from the pool
+				pool = pool.filter((el) => !target.data.playerDiscovered[el] || el == 'size');//remove already discovered elements from the pool
 				let discoveries = discover(pool);
 				discoveries.forEach((n) => {
 					if (n == 'size') {
@@ -375,9 +377,12 @@ class Party {
 		this.updateInfo();
 	}
 	contact(target) {
+		target.data.playerDiscovered.contacted = true;
+
 		// compute the status of target
 		const tendency = target.data.getTendency();
 		const stat = (tendency.trade + tendency.assemble) / (tendency.fight * 2);
+
 		//generate randomized input to determine the nature of the interaction with the player
 		let randomized = 0;
 		if (stat < 0.8) {
@@ -389,14 +394,44 @@ class Party {
 		} else {
 			randomized = randNormal(0, 100, 95);
 		}
-		console.log(stat, randomized);
+
 		//generate event
-		if (randomized < 15) {
+		if (randomized < 25) {
 			target.data.status = 'hostile';
+			this.setNPCNotif('They are hostile towards us.')
+		} else if (randomized <= 60) {
+			target.data.status = 'neutral';
+			this.setNPCNotif('They are neutral towards us.')
+		} else if (randomized > 60) {
+			target.data.status = 'friendly';
+			this.setNPCNotif('They are friendly towards us.')
 		}
+		this.updateNPCInteraction(target);
+		this.createNPCInteractionOptions(target);
+		this.updateInfo();
 	}
 	trade(target) {
-		let targetInventory = target.data.generateTradeInventory();
+		let doWeTrade = false
+		switch (target.data.status) {
+			case 'hostile':
+				doWeTrade = false;
+				break;
+			case 'neutral':
+				doWeTrade = rand(0, 100) > 35 ? true : false;
+				break;
+			case 'friendly':
+				doWeTrade = true;
+				break;
+		}
+		if (doWeTrade) {
+			this.setNPCNotif('They accepted to trade');
+			let targetInventory = target.data.generateTradeInventory();
+			console.log(targetInventory);
+			IGWindow.changeWindow('trade');
+		} else {
+			this.setNPCNotif('They do not want to trade.')
+		}
+
 	}
 	setNPCNotif(str, color = 'white') {
 		let message = document.getElementById('NPCInteractionMessage');
@@ -473,6 +508,25 @@ class Party {
 		}
 
 		this.updateVignette();
+
+		// update fuel mark display
+		let distanceToCamp = manhattanDistance(this.pos.x, this.pos.y, player.campPos.x, player.campPos.y);
+		let lowFuelMark = this.vehicle.fuelLoss * (distanceToCamp + 10) / this.vehicle.unitsPerFuelLoss;
+		let noReturnMark = this.vehicle.fuelLoss * distanceToCamp / this.vehicle.unitsPerFuelLoss;
+		let fuelDisplay = document.getElementById('dPartyFuelMark');
+		if (this.inventory.fuel <= 0) {/* NO MORE FUEL */
+			this.inventory.fuel = 0;
+			fuelDisplay.innerHTML = `no fuel`;
+			fuelDisplay.style.color = 'red';
+		} else if (this.inventory.fuel < noReturnMark) {/* NOT ENOUGH FUEL TO GO BACK TO CAMP */
+			fuelDisplay.innerHTML = `very low fuel`;
+			fuelDisplay.style.color = 'orange';
+		} else if (this.inventory.fuel <= lowFuelMark) {/* LOW FUEL */
+			fuelDisplay.innerHTML = `low fuel`;
+			fuelDisplay.style.color = 'yellow';
+		} else {
+			fuelDisplay.innerHTML = ``;
+		}
 	}
 	updateOptions() {
 		let party = this;

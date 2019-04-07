@@ -84,24 +84,6 @@
 							</div>
 						</div>
 					</div>
-					<!-- NPC interaction -->
-					<div id='NPCInteractionPanel' class='hidden'>
-						<div style='margin-bottom: 15px;'>Available time: <span id='NPCInteractionPartyTime' style='font-size: 20; color: rgb(138, 241, 42)'></span>
-							hours</div>
-						<div style='margin-bottom: 15px;'>
-							<div id='hordeInteractionMessage' class='hidden'>
-								<div>Size: <span id='hordeSize'>?</span></div>
-							</div>
-							<div id='survivorInteractionMessage' class='hidden'>
-								<div>Size: <span id='survivorSize'>?</span></div>
-								<div>Equipment: <span id=survivorEquipment>?</span></div>
-								<div>Status: <span id='survivorStatus'>?</span></div>
-								<div>Type: <span id='survivorType'>?</span></div>
-							</div>
-						</div>
-						<div id='NPCInteractionOptions'></div>
-						<div id='NPCInteractionMessage'></div>
-					</div>
 				</div>
 				<div id='leftpanel-commandscontainer'>
 					<input id='bCamp' type='button' value='Overview'>
@@ -212,22 +194,51 @@
 								</div>
 
 							</div><!-- end inventory -->
-							<div id='partyTimeContainer'>Available time: <span id='dPartyTime' style='font-size: 20; color: rgb(138, 241, 42)'></span>
-								hours</div>
+							<div id='partyTimeContainer'>
+								Available time: <span id='dPartyTime' style='font-size: 20; color: rgb(138, 241, 42)'></span> hours
+								<span id='dPartyFuelMark'></span>
+							</div>
+
 							<div id='partyCommands' class='partyCommands'></div>
 							<div id='dPartyNotif' class='partyNotif'></div>
 						</div>
-						<div id='trade' class='hidden'>
-							<div id='tradePlayerContainer'>
-								<div class='tradeContainerTitle'>Your stuff</div>
-								<div class='tradeInventoryContainer'>
-
-								</div>
+						<!-- npc interaction -->
+						<div id='NPCInteractionWindow'>
+							<div id='NPCInteractionTabsBar'>
+								<div id='NPCOverviewTab' class='sitePanelBarTab sitePanelBarTab_clicked'>Overview</div>
+								<div id='NPCTradeTab' class='sitePanelBarTab hidden'>Trade</div>
 							</div>
-							<div id='tradeNPCContainer'>
-								<div class='tradeContainerTitle'>Their stuff</div>
-								<div class='tradeInventoryContainer'>
+							<div id='NPCInteractionContent'>
+								<div id='NPCOverviewPanel'>
+										<div>Available time: <span id='NPCInteractionPartyTime' style='font-size: 20; color: rgb(138, 241, 42)'></span>
+											hours</div>
+										<div>
+											<div id='hordeInteractionMessage' class='hidden'>
+												<div>Size: <span id='hordeSize'>?</span></div>
+											</div>
+											<div id='survivorInteractionMessage' class='hidden'>
+												<div>Size: <span id='survivorSize'>?</span></div>
+												<div>Equipment: <span id=survivorEquipment>?</span></div>
+												<div>Status: <span id='survivorStatus'>?</span></div>
+												<div>Type: <span id='survivorType'>?</span></div>
+											</div>
+										</div>
+										<div id='NPCInteractionOptions'></div>
+										<div id='NPCInteractionMessage'></div>
+								</div>
+								<div id='NPCTradePanel' class='hidden'>
+									<div id='tradePlayerContainer'>
+										<div class='tradeContainerTitle'>Your stuff</div>
+										<div class='tradeInventoryContainer'>
 
+										</div>
+									</div>
+									<div id='tradeNPCContainer'>
+										<div class='tradeContainerTitle'>Their stuff</div>
+										<div class='tradeInventoryContainer'>
+
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>

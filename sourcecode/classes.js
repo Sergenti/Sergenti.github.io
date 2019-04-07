@@ -101,11 +101,12 @@ class TileData {
 				case 'factory':
 					/* (concrete+, metal++, electronics+, ammo) */
 					lootPool = new LootPool(
-						new LootPoolItem('metal', 2, 5, 3),
-						new LootPoolItem('concrete', 3, 6, 2),
-						new LootPoolItem('electronics', 3, 11, 2),
+						new LootPoolItem('metal', 2, 5, 5),
+						new LootPoolItem('concrete', 3, 6, 7),
+						new LootPoolItem('electronics', 3, 11, 3),
 						new LootPoolItem('ammo', 1, 3, 1),
-						new LootPoolItem('cloth', 6, 18, 2)
+						new LootPoolItem('cloth', 6, 18, 2),
+						new LootPoolItem('fuel', 3, 6, 2)
 					);
 					break;
 				case 'city_l':
@@ -255,7 +256,11 @@ class Inventory {
 		} else {
 			endOfDayBuffer[type] += qty;
 			this[type] += qty;
+			if(this[type] < 0){
+				this[type] = 0;
+			}
 		}
+		updateMetrics();
 	}
 	forAll(callback) {
 		Object.getOwnPropertyNames(this).forEach((resource) => callback(resource));
@@ -299,6 +304,10 @@ class Person {
 		}
 		//console.log({proba: sicknessProbability, test: test, per: this});
 	}
+	wound() {
+		this.sick = true;
+		this.sickTimeCounter = 0;
+	}
 }
 
 class PeopleGroup { // container for people, eases transfers and other group gestion
@@ -318,6 +327,20 @@ class PeopleGroup { // container for people, eases transfers and other group ges
 	}
 	deathId(id) {
 		this.members.splice(this.getIndexById(id), 1);
+	}
+	woundQty(qty = 1) {
+		let deaths = 0, wounds = 0;
+		for (let i = 0; i < qty; i++) {
+			let person = selectRandomFromArray(this.members);
+			if(!person.sick){
+				person.wound();
+				wounds++;
+			} else {
+				this.deathId(person.id);
+				deaths++;
+			}
+		}
+		return {deaths: deaths, wounds: wounds};
 	}
 	transfer(qty, targetGroup) { // transfer people from this group to a target group
 		if (!(targetGroup instanceof PeopleGroup)) {
@@ -383,7 +406,6 @@ class SiteDisplayController {
 			garage: document.getElementById('garagePanel'),
 			research: document.getElementById('researchPanel'),
 		}
-
 		this.currentPanel = 'build';
 
 		let self = this;
@@ -427,6 +449,45 @@ class SiteDisplayController {
 	}
 }
 
+class NPCInteractionController {
+	constructor() {
+		this.panels = {
+			overview: document.getElementById('NPCOverviewPanel'),
+			trade: document.getElementById('NPCTradePanel'),
+		}
+		this.tabs = {
+			overview: document.getElementById('NPCOverviewTab'),
+			trade: document.getElementById('NPCTradeTab'),
+		};
+		this.currentPanel = 'overview';
+
+		let self = this;
+		Object.getOwnPropertyNames(this.tabs).forEach((tabName) => {
+			let tab = self.tabs[tabName];
+			tab.addEventListener('click', () => self.changePanel(tabName, self));
+		});
+	}
+	changePanel(panelName, self = this) {
+		self.currentPanel = panelName;
+		closeOtherThan(panelName);
+		openPanel(panelName);
+
+		function openPanel(name) {
+			self.panels[name].classList.remove('hidden')
+			self.tabs[name].classList.add('sitePanelBarTab_clicked');
+		}
+		function closePanel(name) {
+			self.panels[name].classList.add('hidden');
+			self.tabs[name].classList.remove('sitePanelBarTab_clicked');
+		}
+		function closeOtherThan(name) {
+			let names = Object.getOwnPropertyNames(self.panels);
+			names.filter((n) => n != name).forEach((n) => closePanel(n));
+		}
+	}
+
+}
+
 class IGWindowController {
 	constructor(){
 		this.container = document.getElementById('IGWindowContainer');
@@ -435,6 +496,7 @@ class IGWindowController {
 		this.windows = {
 			site: document.getElementById('siteDet'),
 			groups: document.getElementById('groups'),
+			NPCInteraction: document.getElementById('NPCInteractionWindow'),
 			/* events: document.getElementById('events') */
 		};
 		this.currentWindow = 'site';
