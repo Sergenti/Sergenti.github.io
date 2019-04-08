@@ -192,6 +192,7 @@ let siteDet = new SiteDisplayController();
 let evtDet = new EventDisplayController();
 let IGWindow = new IGWindowController();
 let TimerController = new EventTimerController();
+let NPCInteraction = new NPCInteractionController();
 
 /////////////////////////////////////SETUP///////////////////////////////////////
 (async () => {
@@ -241,6 +242,9 @@ let TimerController = new EventTimerController();
 	IGWindow.exit.addEventListener('click', () => { IGWindow.hide() });
 	/* on window resize */
 	window.addEventListener('resize', windowResized);
+
+	// generate trading interface BEFORE any Party.updateInfo()
+	NPCInteraction.generateTradingInterface();
 
 	/* load preferences (sound)*/
 	console.log('loading preferences...')
@@ -784,7 +788,6 @@ function openSavedGame() {
 			 create a party icon */
 		if (party.inMission) {
 			['food', 'ammo', 'fuel'].forEach((name) => {
-				camp.resources[name] -= party.inventory[name];
 				let input = document.getElementById('n' + firstLetterToUpperCase(name));
 				input.classList.add('hidden');
 				input.value = 0;

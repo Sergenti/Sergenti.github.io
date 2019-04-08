@@ -258,6 +258,8 @@ class Survivor {
 			type: false,
 			contacted: false,
 			friendly: false,
+			openToTrading: false,
+			acceptedTrading: false,
 		}
 	}
 	getTendency() {
@@ -317,13 +319,13 @@ class Survivor {
 	getStatusStr() {
 		let statusStr;
 		if (this.status == 'friendly') {
-			statusStr = { str: status, color: 'green' };
+			statusStr = { str: this.status, color: 'green' };
 		} else if (this.status == 'neutral') {
-			statusStr = { str: status, color: 'grey' };
+			statusStr = { str: this.status, color: 'grey' };
 		} else if (this.status == 'hostile') {
-			statusStr = { str: status, color: 'red' };
+			statusStr = { str: this.status, color: 'red' };
 		} else if (this.status == 'unknown') {
-			statusStr = { str: status, color: 'white' };
+			statusStr = { str: this.status, color: 'white' };
 		}
 		return statusStr;
 	}

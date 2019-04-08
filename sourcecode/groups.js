@@ -137,13 +137,14 @@ class Party {
 				SURVIVOR
 		*/
 		else if (NPC.data instanceof Survivor) {
-			if (party.time >= 1) {
-				createOption('Attack', () => attack(NPC));
+			if (party.time >= 3) {
+				createOption('Attack (3h)', () => attack(NPC));
 			}
 			if (party.time >= 2 && NPC.data.status == 'unknown') {
 				createOption('Contact', () => contact(NPC));
 			}
-			if (NPC.data.playerDiscovered.contacted == true) {
+			// requires NPC to have been contacted and not to have been asked for trade already 
+			if (NPC.data.playerDiscovered.contacted && !NPC.data.playerDiscovered.openToTrading) {
 				createOption('Trade', () => trade(NPC));
 			}
 			if (party.time >= 3) {
@@ -255,7 +256,6 @@ class Party {
 			if (target.data instanceof Horde) {
 				this.pos = { x: target.x, y: target.y };
 				moveElementOnTileMap(document.getElementById(g('partyIcon', this.gn)), `map${target.x}_${target.y}`);
-				this.updateMovementMap();
 				target.move(Math.sign(rand(-50, 50)), Math.sign(rand(-50, 50)));
 			}
 			/* VS SURVIVOR */
@@ -263,7 +263,11 @@ class Party {
 				/* move to enemy position */
 				this.pos = { x: target.x, y: target.y };
 				moveElementOnTileMapSmooth(document.getElementById(g('partyIcon', this.gn)), `map${target.x}_${target.y}`);
-				this.updateMovementMap();
+
+				//change enemy status to hostile
+				target.data.status = 'hostile';
+				target.data.looseTrust();
+				target.data.gainAggro();
 
 				// move enemy randomly by one tile
 				target.move(Math.sign(rand(-50, 50)) + target.x, Math.sign(rand(-50, 50)) + target.y);
@@ -273,11 +277,11 @@ class Party {
 				this.inventory.addResource('ammo', -ammoLoss);
 
 				// calculate losses
-				let losses = randNormal(0, this.members, 1);
-				let enemyLosses = rand(1, target.data.members);
+				let losses = randNormal(0, this.people.getTotalMembers(), 1);
+				let enemyLosses = rand(1, Math.round(this.people.getTotalMembers() * 1.30));
 
 				// apply losses
-				const membersKilled = this.people.woundQty(losses);
+				const woundResults = this.people.woundQty(losses);
 				target.data.members -= enemyLosses;
 
 				let kaputtNPC = false
@@ -294,21 +298,23 @@ class Party {
 					new LootPoolItem('wood', 4, 7, 3),
 					new LootPoolItem('drugs', 2, 3, 4)
 				);
+
 				// randomize loot and apply
 				let loot = lp.randomizeLoot(2, 4);
 				loot.applyMultiplier(enemyLosses);
 				loot.addToInv(this.inventory);
+
 				// notify player
-				const woundedStr = losses.wound > 0 ? `${losses.wound} were wounded` : '';
-				const deathsStr = losses.deaths > 0 ? `${losses.deaths} were killed` : '';
+				const woundedStr = woundResults.wounds > 0 ? `${woundResults.wounds} were wounded` : '';
+				const deathsStr = woundResults.deaths > 0 ? `${woundResults.deaths} were killed` : '';
 				let lossesNotif = 'On our side, ';
-				if(xor(woundedStr == '', deathsStr == '')){
-					if(woundedStr != ''){
+				if (xor(woundedStr == '', deathsStr == '')) {
+					if (woundedStr != '') {
 						lossesNotif += woundedStr + '.';
 					} else {
 						lossesNotif += deathsStr + '.';
 					}
-				} else if (woundedStr == '' && deathsStr == ''){
+				} else if (woundedStr == '' && deathsStr == '') {
 					lossesNotif += 'everyone is okay.';
 				} else {
 					lossesNotif += deathsStr + ' and ' + woundedStr + '.';
@@ -355,8 +361,6 @@ class Party {
 						target.data.playerDiscovered.type = true;
 					}
 				});
-				this.updateNPCInteraction(target);
-				this.createNPCInteractionOptions(target);
 
 				function discover(pool) {
 					let diversity = rand(1, pool.length);
@@ -374,6 +378,8 @@ class Party {
 		} else {
 			console.error(new Error('invalid target.'));
 		}
+		this.updateNPCInteraction(target);
+		this.createNPCInteractionOptions(target);
 		this.updateInfo();
 	}
 	contact(target) {
@@ -425,12 +431,15 @@ class Party {
 		}
 		if (doWeTrade) {
 			this.setNPCNotif('They accepted to trade');
-			let targetInventory = target.data.generateTradeInventory();
-			console.log(targetInventory);
-			IGWindow.changeWindow('trade');
+			target.data.playerDiscovered.acceptedTrading = true;
+			NPCInteraction.tabs.trade.classList.remove('hidden');
 		} else {
 			this.setNPCNotif('They do not want to trade.')
 		}
+		target.data.playerDiscovered.openToTrading = true;
+		this.updateNPCInteraction(target);
+		this.createNPCInteractionOptions(target);
+		this.updateInfo();
 
 	}
 	setNPCNotif(str, color = 'white') {
@@ -527,6 +536,14 @@ class Party {
 		} else {
 			fuelDisplay.innerHTML = ``;
 		}
+
+		//update trade values in NPCInspection window
+		Object.getOwnPropertyNames(this.inventory).forEach(resName => {
+			const qtySpan = document.getElementById(`tradePlayer_qtyOwned_${resName}`);
+			qtySpan.innerHTML = this.inventory[resName];
+		});
+		const sickppl = this.people.members.reduce((t, p) => t += p.sick ? 1 : 0, 0);
+		document.getElementById('groupSickMembers').innerHTML = sickppl > 0 ? `<img src="img/gui/pop_sick.png" alt="Sick:" title='Sick'> <span style='color: orange;'>${sickppl}</span>` : '';
 	}
 	updateOptions() {
 		let party = this;
@@ -546,6 +563,7 @@ class Party {
 					party.setNotif('All scavenged equipment is safe in your camp. The scavengers went back to their family for the night.', 'lightgreen');
 					party.transferInventoryToCamp();
 					party.reset();
+					party.people.transfer(party.people.getTotalMembers(), camp.people);
 					/* disable sending this party until tomorrow */
 					party.sendable = false
 					TimerController.addTimer(() => {
@@ -647,7 +665,24 @@ class Party {
 				party.time -= 3;
 				loot = loot.randomizeLoot(1, currTile.lootDiversity);
 				loot.applyMultiplier(party.people.getTotalMembers());
-				loot.addToInv(party.inventory);
+
+				// Apply loot to party inventory but not more than maximum vehicle
+				// carry limit
+				let invMaxReached = false;
+				for (let i = 0; i < loot.items.length; i++) {
+					const item = loot.items[i];
+					const invSize = party.inventory.getSum();
+
+					if (invSize + item.qty > party.vehicle.carry) {
+						const sizeLeft = party.vehicle.carry - invSize;
+						// add items until limit reached
+						party.inventory[item.name] += sizeLeft;
+						invMaxReached = true;
+						break;
+					}
+				}
+
+
 				party.setNotif(generateResourceChangeList(loot));
 				currTile.looseResource(party.people.getTotalMembers());
 				party.updateInfo();

@@ -142,7 +142,24 @@ function nextDay() {
 				party.people.members.forEach((per) => {
 					per.hungerLoss();
 					per.eat(player.foodRation, party.inventory);//removes food in inventory and adds hunger to the person
-					per.getSickMaybe();//opportunity to get sick
+
+					if (per.sick) {
+						if (party.inventory.drugs >= 0) {
+							party.inventory.addResource('drugs', -1); // use drug
+							let cured = rand(0, 100); // get cured maybe
+							if (cured > 50) { per.sick = false }
+						}
+						if (per.sickTimeCounter < per.diseaseResistance) {
+							per.sickTimeCounter++;
+						} else {
+							party.people.deathId(per.id);
+						}
+					} else {
+						per.getSickMaybe(); // opportunity to get sick
+					}
+					if (per.hunger <= -25) {
+						party.people.deathId(per.id);
+					}
 				});
 				party.updateVignette();
 				//party.checkNPCCollision();

@@ -213,7 +213,7 @@ class TileData {
 }
 
 class TileVehicleMemory {
-	constructor(vehicle, state){
+	constructor(vehicle, state) {
 		this.state = state;
 		this.vehicle = vehicle.type;
 	}
@@ -256,7 +256,7 @@ class Inventory {
 		} else {
 			endOfDayBuffer[type] += qty;
 			this[type] += qty;
-			if(this[type] < 0){
+			if (this[type] < 0) {
 				this[type] = 0;
 			}
 		}
@@ -332,7 +332,7 @@ class PeopleGroup { // container for people, eases transfers and other group ges
 		let deaths = 0, wounds = 0;
 		for (let i = 0; i < qty; i++) {
 			let person = selectRandomFromArray(this.members);
-			if(!person.sick){
+			if (!person.sick) {
 				person.wound();
 				wounds++;
 			} else {
@@ -340,7 +340,7 @@ class PeopleGroup { // container for people, eases transfers and other group ges
 				deaths++;
 			}
 		}
-		return {deaths: deaths, wounds: wounds};
+		return { deaths: deaths, wounds: wounds };
 	}
 	transfer(qty, targetGroup) { // transfer people from this group to a target group
 		if (!(targetGroup instanceof PeopleGroup)) {
@@ -485,11 +485,45 @@ class NPCInteractionController {
 			names.filter((n) => n != name).forEach((n) => closePanel(n));
 		}
 	}
+	// launched at startup
+	generateTradingInterface() {
+		const containers = {
+			playerSide: document.getElementById('tradePlayerSide'),
+			NPCSide: document.getElementById('tradeNPCSide'),
+		};
+
+		['player', 'NPC'].forEach(side => {
+			Object.getOwnPropertyNames(camp.resources).forEach(resName => {
+				let resContainer = document.createElement('div');
+				let icon = document.createElement('img');
+				icon.setAttribute('class', 'tradeResource');
+				icon.setAttribute('src', `/img/gui/resources/${resName}.png`);
+
+				let qtyOwned = document.createElement('span');
+				qtyOwned.setAttribute('id', `trade${firstLetterToUpperCase(side)}_qtyOwned_${resName}`);
+
+				let qtyForTrade = document.createElement('input');
+				qtyForTrade.setAttribute('type', 'number');
+				qtyForTrade.setAttribute('value', '0');
+				qtyForTrade.setAttribute('id', `trade${firstLetterToUpperCase(side)}_qtyForTrade_${resName}`);
+
+				let qtyContainer = document.createElement('div');
+				qtyContainer.setAttribute('class', 'tradeResource');;
+
+				qtyContainer.appendChild(qtyOwned);
+				qtyContainer.appendChild(qtyForTrade);
+
+				resContainer.appendChild(icon);
+				resContainer.appendChild(qtyContainer);
+				containers[`${side}Side`].appendChild(resContainer);
+			});
+		});
+	}
 
 }
 
 class IGWindowController {
-	constructor(){
+	constructor() {
 		this.container = document.getElementById('IGWindowContainer');
 		this.content = document.getElementById('IGWindow');
 		this.exit = document.getElementById('IGWindowExitButton');
@@ -698,7 +732,9 @@ class Loot {
 		}
 	}
 	addToInv(targetInventory) {
-		this.items.forEach((item) => item.applyToInv(targetInventory))
+		this.items.forEach((item) => {
+			item.applyToInv(targetInventory)
+		})
 	}
 	getQty(name) {
 		let qty = 0;
@@ -757,5 +793,65 @@ class MapColor {
 				window.requestAnimationFrame(step);
 			}
 		}
+	}
+}
+
+class TradeMonitor {
+	constructor() {
+		this.participants = {
+			party: undefined,
+			NPC: undefined,
+		}
+		this.tradeInventories = {
+			party: new Inventory(),
+			NPC: new Inventory(),
+		}
+		this.resourceValues = { // relative prices for one item
+			food: 8,
+			ammo: 10,
+			drugs: 16,
+			fuel: 12,
+			electronics: 6,
+			wood: 2,
+			concrete: 4,
+			cloth: 2,
+			metal: 6,
+		}
+	}
+	linkParty(party) {
+		this.participants.party = party;
+	}
+	linkNPC(NPC) {
+		this.participants.NPC = NPC;
+	}
+	setTradeItemQty(targetString, resourceName, quantity) {
+		switch (targetString) {
+			case 'party':
+				const differenceP = quantity - this.tradeInventories.party[resourceName];
+				this.tradeInventories.party.addResource(resourceName, differenceP);
+				break;
+			case 'NPC':
+				const differenceN = quantity - this.tradeInventories.NPC[resourceName];
+				this.tradeInventories.NPC.addResource(resourceName, differenceN);
+				break;
+			default:
+				console.error(new Error('Unexpected target string. Use "party" or "NPC".'))
+		}
+	}
+	reset() {
+		this.participants = {
+			party: undefined,
+			NPC: undefined,
+		}
+		this.tradeInventories = {
+			party: new Inventory(),
+			NPC: new Inventory(),
+		}
+	}
+	getTradeInventoriesValues() {
+		return {
+			party: Object.getOwnPropertyNames(this.tradeInventories.party).reduce((t, n) => t += this.tradeInventories.party[n] * this.resourceValues[n], 0),
+			NPC: Object.getOwnPropertyNames(this.tradeInventories.NPC).reduce((t, n) => t += this.tradeInventories.NPC[n] * this.resourceValues[n], 0),
+		};
 	}
 }
