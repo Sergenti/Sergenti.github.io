@@ -679,6 +679,8 @@ class Party {
 						party.inventory[item.name] += sizeLeft;
 						invMaxReached = true;
 						break;
+					} else {
+						item.applyToInv(party.inventory);
 					}
 				}
 
