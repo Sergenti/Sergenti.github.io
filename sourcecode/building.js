@@ -44,9 +44,7 @@ class BuildController {
 				limit: false,
 				workerCapacity: 5,
 				onDayEnd: function (qty) {
-					const averageWorkersPerGarden = camp.buildingCounter.getWorkers('garden') / qty;
-					const productionPerGarden = player.farmProductionMultiplier * averageWorkersPerGarden;
-					const totalProduction = Math.round(productionPerGarden * qty)
+					const totalProduction = Math.floor(player.farmProductionMultiplier * camp.buildingCounter.getWorkers('garden'))
 					camp.resources.addResource('food', totalProduction);
 					console.log('Garden production today: ' + totalProduction + ' food');
 					updateMetrics();
@@ -128,9 +126,8 @@ class BuildController {
 				},
 				text: 'Build a windmill to produce more food out of your crops.',
 				limit: false,
-				workerCapacity: 4,
 				onBuild: function () {
-					player.farmProductionMultiplier += 0.25;
+					player.farmProductionMultiplier += 0.05;
 				},
 			}),
 			/* Bullet factory */

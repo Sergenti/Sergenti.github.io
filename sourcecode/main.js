@@ -193,6 +193,7 @@ let evtDet = new EventDisplayController();
 let IGWindow = new IGWindowController();
 let TimerController = new EventTimerController();
 let NPCInteraction = new NPCInteractionController();
+const groupWarnings = new GroupWarningsController();
 
 /////////////////////////////////////SETUP///////////////////////////////////////
 (async () => {
@@ -322,6 +323,7 @@ let NPCInteraction = new NPCInteractionController();
 			}
 		});
 		console.log('done ! version ' + version);
+		console.log('have fun !');
 	});
 })();
 ////////////////////////////////////LIBRARY//////////////////////////////////////

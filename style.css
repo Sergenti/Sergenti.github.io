@@ -768,3 +768,14 @@ input[id=bNextDay]:hover{
 	font-size: 20px;
 	font-weight: bold;
 }
+
+#groupWarning_container{
+	position: absolute;
+	right: 15px;
+	top: 30%;
+	width: 150px;
+	height: 80px;
+	border: 2px solid rgb(190, 48, 48);
+	border-radius: 3px;
+	padding: 5px;
+}

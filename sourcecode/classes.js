@@ -12,7 +12,7 @@ class Player {
 		this.peopleIdCounter = 0;
 		this.siteIdCounter = 0;
 
-		this.farmProductionMultiplier = 1.60;//food produced by one farmer in a day on average
+		this.farmProductionMultiplier = 0.75;//food produced by one farmer in a day on average
 
 		this.researchUnlocked = false;
 		this.garageUnlocked = false;
@@ -622,6 +622,62 @@ class EventDisplayController {
 		this.showContinue();
 	}
 
+}
+
+class GroupWarningsController {
+	constructor() {
+		this.warnings = {
+			storage: { str: '', color: 'white', active: false },
+			wounded: { str: '', color: 'white', active: false },
+			fuel: { str: '', color: 'white', active: false },
+		}
+	}
+	set(type, message, color) {
+		this.warnings[type].str = message;
+		this.warnings[type].color = color;
+		this.warnings[type].active = true;
+		this.update();
+	}
+	remove(type) {
+		if (type == 'all') {
+			Object.getOwnPropertyNames(this.warnings).forEach(wName => {
+				this.warnings[wName].str = '';
+				this.warnings[wName].color = 'white';
+				this.warnings[wName].active = false;
+			});
+		} else {
+			this.warnings[type].str = '';
+			this.warnings[type].color = 'white';
+			this.warnings[type].active = false;
+		}
+
+		this.update();
+	}
+	update() {
+		const warningsContainer = document.getElementById('groupWarning_container');
+		const self = this;
+		if (atLeastOneIsActive()) {
+			warningsContainer.classList.remove('hidden');
+		} else {
+			warningsContainer.classList.add('hidden');
+		}
+		// update messages
+		Object.getOwnPropertyNames(this.warnings).forEach(wName => {
+			const display = document.getElementById(`groupWarning_${wName}`);
+
+			if (this.warnings[wName].active) {
+				display.innerHTML = this.warnings[wName].str;
+				display.style.color = this.warnings[wName].color;
+				display.classList.remove('hidden');
+			} else {
+				display.classList.add('hidden');
+			}
+		});
+
+		function atLeastOneIsActive() {
+			return Object.getOwnPropertyNames(self.warnings).reduce((t, wName) => t = self.warnings[wName].active ? true : t, false);
+		}
+	}
 }
 
 /* Looting system pools */

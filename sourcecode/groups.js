@@ -73,6 +73,7 @@ class Party {
 			input.classList.remove('hidden');
 		});
 		this.icon.parentElement.removeChild(this.icon);
+		groupWarnings.remove('all');
 	}
 	send() {
 		this.time = partiesTimeLimit;
@@ -483,6 +484,21 @@ class Party {
 			if (this.time == 0) {
 				this.setNotif(`There's nothing left to do here today.`, 'lightgrey');
 			}
+
+			// update fuel mark display
+			let distanceToCamp = manhattanDistance(this.pos.x, this.pos.y, player.campPos.x, player.campPos.y);
+			let lowFuelMark = this.vehicle.fuelLoss * (distanceToCamp + 10) / this.vehicle.unitsPerFuelLoss;
+			let noReturnMark = this.vehicle.fuelLoss * distanceToCamp / this.vehicle.unitsPerFuelLoss;
+			if (this.inventory.fuel <= 0) {/* NO MORE FUEL */
+				this.inventory.fuel = 0;
+				groupWarnings.set('fuel', 'no fuel', 'red');
+			} else if (this.inventory.fuel < noReturnMark) {/* NOT ENOUGH FUEL TO GO BACK TO CAMP */
+				groupWarnings.set('fuel', 'very low fuel', 'orange');
+			} else if (this.inventory.fuel <= lowFuelMark) {/* LOW FUEL */
+				groupWarnings.set('fuel', 'low fuel', 'yellow');
+			} else {
+				groupWarnings.remove('fuel');
+			}
 		} else {
 			document.getElementById('resourceInputs').classList.remove('hidden');
 			document.getElementById('groupInventory').classList.add('hidden');
@@ -518,32 +534,18 @@ class Party {
 
 		this.updateVignette();
 
-		// update fuel mark display
-		let distanceToCamp = manhattanDistance(this.pos.x, this.pos.y, player.campPos.x, player.campPos.y);
-		let lowFuelMark = this.vehicle.fuelLoss * (distanceToCamp + 10) / this.vehicle.unitsPerFuelLoss;
-		let noReturnMark = this.vehicle.fuelLoss * distanceToCamp / this.vehicle.unitsPerFuelLoss;
-		let fuelDisplay = document.getElementById('dPartyFuelMark');
-		if (this.inventory.fuel <= 0) {/* NO MORE FUEL */
-			this.inventory.fuel = 0;
-			fuelDisplay.innerHTML = `no fuel`;
-			fuelDisplay.style.color = 'red';
-		} else if (this.inventory.fuel < noReturnMark) {/* NOT ENOUGH FUEL TO GO BACK TO CAMP */
-			fuelDisplay.innerHTML = `very low fuel`;
-			fuelDisplay.style.color = 'orange';
-		} else if (this.inventory.fuel <= lowFuelMark) {/* LOW FUEL */
-			fuelDisplay.innerHTML = `low fuel`;
-			fuelDisplay.style.color = 'yellow';
-		} else {
-			fuelDisplay.innerHTML = ``;
-		}
-
 		//update trade values in NPCInspection window
 		Object.getOwnPropertyNames(this.inventory).forEach(resName => {
 			const qtySpan = document.getElementById(`tradePlayer_qtyOwned_${resName}`);
 			qtySpan.innerHTML = this.inventory[resName];
 		});
 		const sickppl = this.people.members.reduce((t, p) => t += p.sick ? 1 : 0, 0);
-		document.getElementById('groupSickMembers').innerHTML = sickppl > 0 ? `<img src="img/gui/pop_sick.png" alt="Sick:" title='Sick'> <span style='color: orange;'>${sickppl}</span>` : '';
+		if (sickppl > 0) {
+			groupWarnings.set('wounded', `<img src="img/gui/pop_sick.png" alt="Sick:" title='sick/wounded'> <span style='color: orange;'>${sickppl}</span>`, 'orange');
+		} else {
+			groupWarnings.remove('wounded');
+		}
+
 	}
 	updateOptions() {
 		let party = this;
@@ -684,6 +686,16 @@ class Party {
 					}
 				}
 
+				// display message if max inventory size reached
+				if (invMaxReached) {
+					// max reached
+					groupWarnings.set('storage', 'storage full', 'red');
+				} else if (party.inventory.getSum() >= party.vehicle.carry * 0.95) {
+					// warning
+					groupWarnings.set('storage', 'storage almost full', 'orange');
+				} else {
+					groupWarnings.remove('storage');
+				}
 
 				party.setNotif(generateResourceChangeList(loot));
 				currTile.looseResource(party.people.getTotalMembers());
