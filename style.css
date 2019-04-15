@@ -755,6 +755,8 @@ input[id=bNextDay]:hover{
 .tradeInventoryContainer{
 	padding: 5px;
 	margin-top: 5px;
+	border: 1px solid black;
+	border-radius: 3px;
 }
 #NPCInteractionContent{
 	padding: 15px;
@@ -767,6 +769,18 @@ input[id=bNextDay]:hover{
 .tradeContainerTitle{
 	font-size: 20px;
 	font-weight: bold;
+}
+.tradeQtyOwned{
+	position: relative;
+	left: 16px;
+}
+.tradeSlashBar{
+	position: relative;
+	left: 20px;
+}
+.tradeQtyForTrade{
+	position: relative;
+	left: 25px;
 }
 
 #groupWarning_container{

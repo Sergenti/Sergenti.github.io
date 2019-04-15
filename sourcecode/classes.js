@@ -472,6 +472,16 @@ class NPCInteractionController {
 		closeOtherThan(panelName);
 		openPanel(panelName);
 
+		if (panelName == 'trade') {
+			/* set trade participants */
+			console.log('NPC currentSelected tab click', NPCs.currentSelected);
+			tradeController.linkNPC(NPCs.currentSelected);
+			tradeController.linkParty(scavenging.parties[scavenging.selectedParty]);
+			// set values display
+			document.getElementById('tradeValue_player').innerHTML = tradeController.getTradeInventoriesValues()['party'];
+			document.getElementById('tradeValue_NPC').innerHTML = tradeController.getTradeInventoriesValues()['NPC'];
+		}
+
 		function openPanel(name) {
 			self.panels[name].classList.remove('hidden')
 			self.tabs[name].classList.add('sitePanelBarTab_clicked');
@@ -500,17 +510,23 @@ class NPCInteractionController {
 				icon.setAttribute('src', `/img/gui/resources/${resName}.png`);
 
 				let qtyOwned = document.createElement('span');
+				qtyOwned.classList.add('tradeQtyOwned')
 				qtyOwned.setAttribute('id', `trade${firstLetterToUpperCase(side)}_qtyOwned_${resName}`);
 
 				let qtyForTrade = document.createElement('input');
+				qtyForTrade.classList.add('tradeQtyForTrade');
 				qtyForTrade.setAttribute('type', 'number');
 				qtyForTrade.setAttribute('value', '0');
 				qtyForTrade.setAttribute('id', `trade${firstLetterToUpperCase(side)}_qtyForTrade_${resName}`);
+
+				/* INPUT EVENT LISTENER */
+				qtyForTrade.addEventListener('input', () => tradeQtyInputListener(qtyForTrade, qtyOwned, side, resName));
 
 				let qtyContainer = document.createElement('div');
 				qtyContainer.setAttribute('class', 'tradeResource');;
 
 				qtyContainer.appendChild(qtyOwned);
+				qtyContainer.insertAdjacentHTML('beforeend', ' <span class="tradeSlashBar">/</span> ');
 				qtyContainer.appendChild(qtyForTrade);
 
 				resContainer.appendChild(icon);
@@ -518,6 +534,38 @@ class NPCInteractionController {
 				containers[`${side}Side`].appendChild(resContainer);
 			});
 		});
+
+		function tradeQtyInputListener(input, owned, side, resName) {
+			const newValue = Number(input.value);
+			/* define the inventory of the owner of this input */
+			let ownerInventory = (() => {
+				let party = tradeController.participants.party.inventory;
+				let NPC = tradeController.participants.NPC.data.tradeInventory;
+				return side == 'player' ? party : NPC;
+			})();
+
+			const totalResource = ownerInventory[resName];
+			const remainingInInv = totalResource - newValue;
+			if (newValue < 0 || remainingInInv < 0) {
+				input.style.color = 'red';
+				if (newValue < 0) {
+					input.value = 0;//Reset the value of the field
+				} else if (newValue > totalResource) {
+					input.value = totalResource;
+				}
+				setTimeout(function () { input.style.color = 'white' }, 500);
+			} else {
+				/* set quantities in controller */
+				tradeController.setTradeItemQty(side == 'player' ? 'party' : 'NPC', resName, newValue);
+				owned.innerHTML = remainingInInv;
+				input.value = newValue;
+			}
+			/* update value display */
+			const valueDisplay = document.getElementById(`tradeValue_${side}`);
+			const sideName = side == 'player' ? 'party' : 'NPC';
+			const total = tradeController.getTradeInventoriesValues()[sideName];
+			valueDisplay.innerHTML = total;
+		}
 	}
 
 }
@@ -852,12 +900,13 @@ class MapColor {
 	}
 }
 
-class TradeMonitor {
+class TradeController {
 	constructor() {
 		this.participants = {
 			party: undefined,
 			NPC: undefined,
 		}
+		this.NPCInventory = undefined;
 		this.tradeInventories = {
 			party: new Inventory(),
 			NPC: new Inventory(),
@@ -873,11 +922,20 @@ class TradeMonitor {
 			cloth: 2,
 			metal: 6,
 		}
+
+		document.getElementById('validateTradeBtn').addEventListener('click', validateTrade);
 	}
 	linkParty(party) {
 		this.participants.party = party;
 	}
 	linkNPC(NPC) {
+		// if it's the first time we trade with this NPC, generate him an Inventory
+		if (NPC.data.tradeInventory == undefined) {
+			NPC.data.tradeInventory = NPC.data.generateTradeInventory();
+			NPC.data.tradeInventory.forAll((resName) => {
+				document.getElementById(`tradeNPC_qtyOwned_${resName}`).innerHTML = NPC.data.tradeInventory[resName] - Number(document.getElementById(`tradeNPC_qtyForTrade_${resName}`).value);
+			});
+		}
 		this.participants.NPC = NPC;
 	}
 	setTradeItemQty(targetString, resourceName, quantity) {
@@ -895,14 +953,19 @@ class TradeMonitor {
 		}
 	}
 	reset() {
-		this.participants = {
-			party: undefined,
-			NPC: undefined,
-		}
 		this.tradeInventories = {
 			party: new Inventory(),
 			NPC: new Inventory(),
 		}
+		// reset inputs
+		Object.getOwnPropertyNames(this.tradeInventories).forEach(side => {
+			this.tradeInventories[side].forAll(resName => {
+				const input = document.getElementById(`trade${firstLetterToUpperCase(side == 'party' ? 'player' : 'NPC')}_qtyForTrade_${resName}`);
+				input.value = 0;
+			});
+			document.getElementById(`tradeValue_${side == 'party' ? 'player' : 'NPC'}`).innerHTML = 0;
+		});
+
 	}
 	getTradeInventoriesValues() {
 		return {

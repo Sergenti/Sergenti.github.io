@@ -9,7 +9,7 @@ const displayEndOfDayEvents = true;
 const scavengeableTypes = ['plain', 'factory', 'city_s', 'city_m', 'city_l', 'forest', 'gas_station'];
 const zombieFightEfficiency = 1 / 30; // zombies / humans
 const animationFramesPerTile = 15;
-const version = 'alpha 0.5.2';
+const version = 'alpha 0.5.3';
 
 let player = new Player();
 let build = new BuildController();
@@ -194,6 +194,7 @@ let IGWindow = new IGWindowController();
 let TimerController = new EventTimerController();
 let NPCInteraction = new NPCInteractionController();
 const groupWarnings = new GroupWarningsController();
+const tradeController = new TradeController();
 
 /////////////////////////////////////SETUP///////////////////////////////////////
 (async () => {
@@ -615,7 +616,7 @@ function changePanel(name) {//name of the panel we want to show
 		openPanel(name);
 	}
 }
-function tilePosIsVisibleOnScreen(pos){
+function tilePosIsVisibleOnScreen(pos) {
 	const playarea = document.getElementById('playarea');
 	// get coordinates of the camera
 	const camera = {
@@ -644,6 +645,24 @@ function tilePosIsVisibleOnScreen(pos){
 	const isInsideCameraHorizontally = (npcc.end.x > camera.start.x) && (npcc.start.x < camera.end.x)
 
 	return (isInsideCameraHorizontally && isInsideCameraVertically);
+}
+function validateTrade() {
+	const TIV = tradeController.getTradeInventoriesValues();
+	if (TIV.party >= TIV.NPC) {
+		// apply trade
+		tradeController.tradeInventories['party'].forAll(resName => {
+			// NPC -> party
+			tradeController.participants['party'].inventory.addResource(resName, tradeController.tradeInventories['NPC'][resName]);
+			tradeController.participants['NPC'].data.tradeInventory.addResource(resName, -tradeController.tradeInventories['NPC'][resName]);
+			// party -> NPC
+			tradeController.participants['NPC'].data.tradeInventory.addResource(resName, tradeController.tradeInventories['party'][resName]);
+			tradeController.participants['party'].inventory.addResource(resName, -tradeController.tradeInventories['party'][resName]);
+		});
+
+		tradeController.reset();
+		tradeController.participants.party.updateInfo();
+		console.log('trade done !');
+	}
 }
 
 //End update display
@@ -693,6 +712,7 @@ function openMap(data, origin) {
 			tile.id = tileData.id;
 
 			document.getElementById('map').appendChild(tile);
+			tileData.updateImage();
 			//if the tile is the camp
 			if (tileData.typeIndex == map.indexTable.camp) {
 				//set position of camp in the camp object
@@ -783,7 +803,7 @@ function openSavedGame() {
 		Object.setPrototypeOf(party.people, PeopleGroup.prototype);
 
 		party.people.members.forEach((per) => Object.setPrototypeOf(per, Person.prototype));
-		if(!party.sendable){
+		if (!party.sendable) {
 			party.sendable = true;
 		}
 		/* changing display for parties that are in mission

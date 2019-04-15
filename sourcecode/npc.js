@@ -85,8 +85,18 @@ class NPC {
 			let distanceToParty = manhattanDistance(self.x, self.y, party.pos.x, party.pos.y);
 			if (greenFilters != null && distanceToParty <= party.time * party.vehicle.speed) {
 				/* party moving -> display interaction options */
+				NPCs.currentSelected = self;
 				self.displayInteractionInfos();
 				party.createNPCInteractionOptions(self);
+				if(self.data.type == 'survivor') {
+					if(self.data.playerDiscovered.acceptedTrading){
+						/* show trade tab if the party has accepted trading */
+						NPCInteraction.tabs.trade.classList.remove('hidden');
+					} else {
+						NPCInteraction.tabs.trade.classList.add('hidden');
+						NPCInteraction.changePanel('overview');
+					}
+				}
 				IGWindow.changeWindow('NPCInteraction');
 				IGWindow.show();
 			}

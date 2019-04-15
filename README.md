@@ -19,17 +19,17 @@ Play the latest stable branch now at [sergenti.github.io](https://sergenti.githu
 * Build buildings that have different effects on your settlement
 * Grow your population, employ them in your buildings or send them to gather resources
 * NPCs living their lives in the wasteland, fighting, trading, gathering resources, and building camps
+* Trade with NPCs
 
 ### work in progress
 
 * Interactions between the player and NPCs is under construction
 * Overnight events
 
-### missing
+### missing (in order of priority)
 
-* Trade
+* Scavenging, repairing and managin vehicles with garages
 * Events when NPCs collide with player entities
 * Path finding to find the movement range of a party
-* Scavenging, repairing and managin vehicles with garages
 * Tutorial
 * Options

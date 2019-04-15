@@ -60,7 +60,6 @@ class Party {
 	reset() {
 		this.inMission = false;
 		this.status = undefined;
-		this.members = 0;
 		this.pos = player.campPos;
 		let self = this;
 		Object.getOwnPropertyNames(this.inventory).forEach(function (property) {
@@ -264,7 +263,7 @@ class Party {
 				/* move to enemy position */
 				this.pos = { x: target.x, y: target.y };
 				moveElementOnTileMapSmooth(document.getElementById(g('partyIcon', this.gn)), `map${target.x}_${target.y}`);
-
+				this.updateMovementMap();
 				//change enemy status to hostile
 				target.data.status = 'hostile';
 				target.data.looseTrust();
@@ -634,7 +633,7 @@ class Party {
 		if (hasAdjacentTypeMap(currTile.id, 'water')) {
 			if (party.time >= 1 && currTile.typeIndex != map.indexTable.camp) {
 				createGroupOption(gn, 'Fish (1h)', function () {
-					this.time -= 1;
+					party.time -= 1;
 					let success = rand(0, 100);
 					let food = 0;
 					let msg = `Group ${gn + 1} went fishing. `;
@@ -850,7 +849,7 @@ function addGroupsWindowListeners() {
 				newValue = 0;
 				input.value = 0;
 			}
-			input.value = eval(newValue);//gets rid of zero padding that might occur
+			input.value = Number(newValue);//gets rid of zero padding that might occur
 			let max = party.vehicle.carry;
 			/* get the total of other items already in the car */
 			let totalOthers = arr.filter((n) => n != name).reduce((t, n) => { return t += party.inventory[firstLetterToLowerCase(n)]; }, 0);

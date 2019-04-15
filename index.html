@@ -7,7 +7,7 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<link rel="stylesheet" href="style.css">
 	<link rel="icon" href="img/devroadster.gif">
-	<title>Jeu</title>
+	<title>Zombie game</title>
 </head>
 
 <body>
@@ -235,16 +235,19 @@
 								<div id='NPCTradePanel' class='hidden'>
 									<div id='tradePlayerContainer'>
 										<div class='tradeContainerTitle'>Your stuff</div>
-										<div id='tradePlayerSide' class='tradeInventoryContainer'>
-
+										<div id='tradePlayerSide' class='tradeInventoryContainer innerShadow'>
+											<!-- populated by js -->
 										</div>
+										<div>Value: <span id='tradeValue_player'></span></div>
 									</div>
 									<div id='tradeNPCContainer'>
 										<div class='tradeContainerTitle'>Their stuff</div>
-										<div id='tradeNPCSide' class='tradeInventoryContainer'>
-
+										<div id='tradeNPCSide' class='tradeInventoryContainer innerShadow'>
+											<!-- populated by js -->
 										</div>
+										<div>Value: <span id='tradeValue_NPC'></span></div>
 									</div>
+									<button id='validateTradeBtn'>Trade</button>
 								</div>
 							</div>
 						</div>
