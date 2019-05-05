@@ -178,7 +178,7 @@ class TileData {
 	setTypeDependentVariables() {
 		switch (this.type) {
 			case 'forest':
-				this.resourceDecay = 15;
+				this.resourceDecay = 50;
 				this.lootDiversity = 2;
 				break;
 			case 'factory':
@@ -209,7 +209,7 @@ class TileData {
 				this.resourceDecay = 0;
 		}
 	}
-	ct() { changeTile(this.id, editor.currentElemMap) }
+	ct() { editorClickOnTile(this.id, editor.currentElemMap) }
 }
 
 class TileVehicleMemory {
@@ -912,15 +912,15 @@ class TradeController {
 			NPC: new Inventory(),
 		}
 		this.resourceValues = { // relative prices for one item
-			food: 8,
+			food: 5,
 			ammo: 10,
-			drugs: 16,
+			drugs: 20,
 			fuel: 12,
-			electronics: 6,
-			wood: 2,
+			electronics: 2,
+			wood: 1,
 			concrete: 4,
-			cloth: 2,
-			metal: 6,
+			cloth: 6,
+			metal: 8,
 		}
 
 		document.getElementById('validateTradeBtn').addEventListener('click', validateTrade);

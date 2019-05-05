@@ -6,6 +6,7 @@ const partiesTimeLimit = 12; // hours per day
 const houseMaxPopIncrease = 5;
 const displayEndOfDayRecap = false;
 const displayEndOfDayEvents = true;
+const includeNPCs = false;
 const scavengeableTypes = ['plain', 'factory', 'city_s', 'city_m', 'city_l', 'forest', 'gas_station'];
 const zombieFightEfficiency = 1 / 30; // zombies / humans
 const animationFramesPerTile = 15;
@@ -13,10 +14,10 @@ const version = 'alpha 0.5.3';
 
 let player = new Player();
 let build = new BuildController();
-let camp = new Site(32, 32, 'camp');
+let camp = new Site(64, 64, 'camp');
 let map = {
-	height: 64, // tiles
-	width: 64,
+	height: 100, // tiles
+	width: 100,
 
 	layout: [],
 	selectedTileId: undefined,
@@ -24,8 +25,8 @@ let map = {
 	color: new MapColor(),
 
 	//in tiles.js
-	indexTable: getIndexTable(),
 	layoutTiles: getLayoutTiles(),
+	indexTable: getIndexTable(),
 }
 
 let endOfDayBuffer = new Inventory();
@@ -89,6 +90,8 @@ let editor = {
 };
 
 let toolbox = {
+	tool: 'pencil',
+	// launched at startup
 	fill: function () {
 		map.layoutTiles.forEach(function (elem, index) {
 			let icon = document.createElement('img');
@@ -100,7 +103,7 @@ let toolbox = {
 
 			let tbtc = document.getElementById('toolbox_tileContainer');
 			tbtc.appendChild(icon);
-			tbtc.style.width = 32 * 10 + 10 + 'px';
+			tbtc.style.width = '350px';
 		});
 	},
 	toggle: function () {
@@ -110,6 +113,9 @@ let toolbox = {
 		} else {
 			toolboxDiv.classList.add('hidden');
 		}
+	},
+	changeTool: function (toolStr) {
+
 	}
 };
 
@@ -231,6 +237,8 @@ const tradeController = new TradeController();
 	document.getElementById('bSave').addEventListener('click', saveGame);
 	document.getElementById('bDeleteSave').addEventListener('click', deleteSaveGame);
 	document.getElementById('bEventContinue').addEventListener('click', evtDet.continue);
+	document.getElementById('toolbox_bucketBtn').addEventListener('click', () => toolbox.tool = 'bucket');
+	document.getElementById('toolbox_pencilBtn').addEventListener('click', () => toolbox.tool = 'pencil');
 	document.getElementById('bMusic').addEventListener('click', () => {
 		setTimeout(() => musics.start(), 500);
 		document.getElementById('bMusic').classList.add('hidden');
@@ -332,14 +340,15 @@ async function newGame() {
 	console.log('generating new game...');
 	openMap(await fetchMapData());
 
-	//add NPC units
-	NPCs.addHordes(50);
-	NPCs.addSurvivors(150);
-	console.log({ humans0: NPCs.getTotalSurvivorMembers(), zombies0: NPCs.getTotalHordeMembers() });
-	NPCs.progress(200);
-	NPCs.forAllUnits((unit) => unit.runAwayFromCamp());
-	console.log({ humans150: NPCs.getTotalSurvivorMembers(), zombies150: NPCs.getTotalHordeMembers() });
-
+	if (includeNPCs) {
+		//add NPC units
+		NPCs.addHordes(150);
+		NPCs.addSurvivors(300);
+		console.log({ humans0: NPCs.getTotalSurvivorMembers(), zombies0: NPCs.getTotalHordeMembers() });
+		NPCs.progress(200);
+		NPCs.forAllUnits((unit) => unit.runAwayFromCamp());
+		console.log({ humans150: NPCs.getTotalSurvivorMembers(), zombies150: NPCs.getTotalHordeMembers() });
+	}
 
 	//setup inventory
 	camp.resources.food = 300;
@@ -471,6 +480,49 @@ function changeTile(id, typeIndex) {
 
 		map.layout[y][x] = tileData;
 	}
+}
+function fillFromTile(id, typeIndex) {
+	const tilePos = getTileXYFromId(id);
+	const startNode = [tilePos.x, tilePos.y];
+	/* generate a fillLayout 2D array that contains 0 to indicate which tiles have been checked */
+	let fillLayout = [];
+	(function (fillLayout) {
+		for (let i = 0; i < map.height; i++) {
+			fillLayout.push([]);
+			for (let j = 0; j < map.width; j++) {
+				fillLayout[i].push(0);
+			}
+		}
+	})(fillLayout)
+	floodFill(startNode, fillLayout);
+
+	function floodFill(node, fillLayout) {
+		let x = node[0];
+		let y = node[1];
+		let dx, dy;
+		//for all direct adjacent nodes
+		for (let i = -1; i < 2; i++) {// Y
+			dy = y + i;
+			for (let j = -1; j < 2; j++) {// X
+				dx = x + j;
+				// is tile is in bound
+				if (dy >= 0 && dy < map.height && dx >= 0 && dx < map.width) {
+					if (xor(Math.abs(j) == 1, Math.abs(i) == 1) && !(j == 0 && i == 0)) {
+						//if the adjacent tile is not a of the type selected and is not already checked
+						if (map.layout[dy][dx].type != map.layoutTiles[typeIndex].type && fillLayout[dy][dx] == 0) {
+							fillLayout[dy][dx] = 1;
+							changeTile(`map${dx}_${dy}`, typeIndex);
+							floodFill([dx, dy], fillLayout);
+						} else {
+							//we need to still say we checked the fence tile
+							fillLayout[dy][dx] = 1;
+						}
+					}
+				}
+			}
+		}
+	}
+
 }
 function clickOnMapTile(tile) {
 	let pos = getTileXYFromId(tile.id);
@@ -664,6 +716,13 @@ function validateTrade() {
 		console.log('trade done !');
 	}
 }
+function editorClickOnTile(id, typeIndex) {
+	if (toolbox.tool == 'bucket') {
+		fillFromTile(id, typeIndex);
+	} else {
+		changeTile(id, typeIndex);
+	}
+}
 
 //End update display
 function closeRecapMenu() {
@@ -854,4 +913,39 @@ function fetchMapData() {
 			return mapJSON.mapData;
 		})
 
+}
+
+function generateNewMap(width, height) {
+	map.layout = [];
+	document.getElementById('map').innerHTML = '';
+
+	for (let y = 0; y < height; y++) {
+		map.layout.push([]);
+		for (let x = 0; x < width; x++) {
+			let tile = document.createElement('img');
+			tile.setAttribute('id', `map${x}_${y}`);
+			tile.setAttribute('src', 'img/plain/bare0.png');
+			tile.setAttribute('alt', 'map_plain.png');
+			tile.addEventListener('click', function () { clickOnMapTile(this) })
+
+			map.layout[y].push({
+				id: `map${x}_${y}`,
+				typeIndex: 0,
+				discovered: false,
+				ct: function () { changeTile(this.id, editor.currentElemMap) },
+			});
+
+			if (x == map.width / 2 && y == map.height / 2) {
+				//set camp position and changing the tile
+				map.layout[y][x].typeIndex = map.indexTable.camp;
+				map.layout[y][x].discovered = true;
+				tile.src = 'img/map_camp.png';
+				tile.alt = 'map_camp.png';
+				camp.mapPos = [x, y];
+			}
+
+			document.getElementById('map').appendChild(tile);
+		}
+		document.getElementById('map').appendChild(document.createElement('br'));
+	}
 }
